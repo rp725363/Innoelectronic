@@ -1,0 +1,6 @@
+{
+  "name": "Innoelectronics",
+  "description": "Innoelectronics - Premier online catalog for genuine electronic components, industrial connectors, microcontrollers, and assembly tools with live inventory and technical datasheets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
