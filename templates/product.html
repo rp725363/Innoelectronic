@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} (SKU: {{ product.sku }}) - Innoelectronics{% endblock %}
+{% block meta_desc %}{{ product.description or ("Genuine " ~ product.name ~ " (" ~ product.sku ~ ") in stock at Innoelectronics. Inquire for bulk pricing and technical datasheets.") }}{% endblock %}
+
+{% block og_title %}{{ product.name }} (SKU: {{ product.sku }}) - Innoelectronics{% endblock %}
+{% block og_desc %}{{ product.description or ("Genuine " ~ product.name ~ " (" ~ product.sku ~ ") in stock at Innoelectronics.") }}{% endblock %}
+{% block og_image %}{{ product.image or url_for('serve_static', filename='logo9.png', _external=True) }}{% endblock %}
+
+{% block twitter_title %}{{ product.name }} (SKU: {{ product.sku }}) - Innoelectronics{% endblock %}
+{% block twitter_desc %}{{ product.description or ("Genuine " ~ product.name ~ " in stock.") }}{% endblock %}
+{% block twitter_image %}{{ product.image or url_for('serve_static', filename='logo9.png', _external=True) }}{% endblock %}
+
+{% block extra_head %}
+<!-- Schema.org Product Structured Data for SEO -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": {{ product.name|tojson }},
+  "sku": {{ product.sku|tojson }},
+  "category": {{ (product.category or 'Electronic Components')|tojson }},
+  "image": {{ (product.image or url_for('serve_static', filename='logo9.png', _external=True))|tojson }},
+  "description": {{ (product.description or ("Genuine " ~ product.name ~ " available at Innoelectronics."))|tojson }},
+  "brand": {
+    "@type": "Brand",
+    "name": "Innoelectronics"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": {{ request.base_url|tojson }},
+    "priceCurrency": "INR",
+    "price": {{ (product.parsedPrice|string if product.parsedPrice and product.parsedPrice > 0 else "0.00")|tojson }},
+    "availability": {{ ("https://schema.org/InStock" if product.inStock else "https://schema.org/OutOfStock")|tojson }},
+    "seller": {
+      "@type": "Organization",
+      "name": "Innoelectronics"
+    }
+  }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+  <!-- Breadcrumbs -->
+  <nav class="flex items-center gap-2 text-xs text-slate-500 mb-6">
+    <a href="/" class="hover:text-blue-600 transition">Inventory Home</a>
+    <span>/</span>
+    <a href="/?category={{ product.category|urlencode }}" class="hover:text-blue-600 transition">{{ product.category or 'Components' }}</a>
+    <span>/</span>
+    <span class="text-slate-800 font-semibold truncate max-w-xs">{{ product.name }}</span>
+  </nav>
+
+  <!-- Main Product Detail Card -->
+  <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-8 p-6 sm:p-10 mb-12">
+    
+    <!-- Left: Image Gallery Area (5 cols) -->
+    <div class="lg:col-span-5 flex flex-col items-center justify-center bg-slate-50 rounded-2xl p-8 border border-slate-100 relative group">
+      {% if product.image and product.image != 'None' %}
+      <img
+        src="{{ product.image }}"
+        alt="{{ product.name }}"
+        class="max-h-80 w-auto object-contain transition duration-300 group-hover:scale-105"
+        onerror="this.parentElement.innerHTML='<div class=\'text-slate-300 flex flex-col items-center py-16\'><svg class=\'w-20 h-20 mb-2\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z\'/></svg><span class=\'text-xs uppercase font-bold tracking-wider\'>Innoelectronics Component</span></div>';"
+      />
+      {% else %}
+      <div class="text-slate-300 flex flex-col items-center py-16">
+        <svg class="w-20 h-20 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+        <span class="text-xs uppercase font-bold tracking-wider">Innoelectronics Component</span>
+      </div>
+      {% endif %}
+
+      <div class="absolute top-4 left-4">
+        <span class="font-mono text-xs bg-slate-900 text-white px-2.5 py-1 rounded-lg font-bold">
+          SKU: {{ product.sku }}
+        </span>
+      </div>
+
+      <div class="absolute top-4 right-4">
+        {% if product.inStock %}
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">
+          <span class="w-2 h-2 rounded-full bg-emerald-600"></span> In Stock
+        </span>
+        {% else %}
+        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
+          Inquire Stock
+        </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Right: Specifications & Actions (7 cols) -->
+    <div class="lg:col-span-7 flex flex-col justify-between space-y-6">
+      <div>
+        <div class="inline-block text-xs font-bold uppercase tracking-wider text-blue-600 mb-2 bg-blue-50 px-2.5 py-1 rounded-md">
+          {{ product.category or 'Component' }}
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight">
+          {{ product.name }}
+        </h1>
+        {% if product.partcode and product.partcode != product.name %}
+        <div class="mt-2 text-sm text-slate-500 font-mono">
+          Manufacturer / Part Code: <strong class="text-slate-800">{{ product.partcode }}</strong>
+        </div>
+        {% endif %}
+
+        <!-- Price -->
+        <div class="mt-6 p-4 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between">
+          <div>
+            <span class="text-xs text-slate-400 block">Unit Price / Quotation</span>
+            <div class="text-2xl font-extrabold text-slate-900">
+              {% if product.parsedPrice and product.parsedPrice > 0 %}
+                ₹{{ "%.2f"|format(product.parsedPrice) }}
+              {% elif product.price and product.price != 'x' and product.price != 'None' %}
+                {{ product.price }}
+              {% else %}
+                <span class="text-blue-600">Request Quote</span>
+              {% endif %}
+            </div>
+          </div>
+          <div class="text-right text-xs text-slate-500">
+            <span>Wholesale &amp; Bulk discounts available</span>
+          </div>
+        </div>
+
+        <!-- Description -->
+        {% if product.description %}
+        <div class="mt-6">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Component Overview</h3>
+          <p class="text-sm text-slate-700 leading-relaxed">
+            {{ product.description }}
+          </p>
+        </div>
+        {% endif %}
+
+        <!-- Technical Specs Table -->
+        <div class="mt-6">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">Specifications</h3>
+          <div class="border border-slate-200 rounded-xl overflow-hidden text-xs">
+            <div class="grid grid-cols-2 p-2.5 bg-slate-50 border-b border-slate-200 font-medium">
+              <span class="text-slate-500">Inventory SKU</span>
+              <span class="text-slate-900 font-mono font-bold">{{ product.sku }}</span>
+            </div>
+            <div class="grid grid-cols-2 p-2.5 bg-white border-b border-slate-200 font-medium">
+              <span class="text-slate-500">Category</span>
+              <span class="text-slate-900">{{ product.category }}</span>
+            </div>
+            {% if product.partcode %}
+            <div class="grid grid-cols-2 p-2.5 bg-slate-50 border-b border-slate-200 font-medium">
+              <span class="text-slate-500">Part Code</span>
+              <span class="text-slate-900 font-mono">{{ product.partcode }}</span>
+            </div>
+            {% endif %}
+            <div class="grid grid-cols-2 p-2.5 bg-white border-b border-slate-200 font-medium">
+              <span class="text-slate-500">Availability</span>
+              <span class="text-slate-900">{% if product.inStock %}Immediate Dispatch{% else %}Available on Order / Lead Time Inquiry{% endif %}</span>
+            </div>
+            <div class="grid grid-cols-2 p-2.5 bg-slate-50 font-medium">
+              <span class="text-slate-500">Quality Guarantee</span>
+              <span class="text-slate-900">100% Genuine Direct Supply</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="pt-6 border-t border-slate-200 flex flex-col sm:flex-row gap-3">
+        <!-- WhatsApp RFQ -->
+        <a
+          href="https://wa.me/919428447698?text=Hello%20Innoelectronics%2C%20I%20would%20like%20to%20inquire%20about%20SKU%20{{ product.sku }}%20({{ product.name|urlencode }}).%20Please%20provide%20pricing%20and%20stock%20availability."
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex-1 py-3 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-md transition flex items-center justify-center gap-2"
+        >
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.983.538 1.954.82 2.791.82 3.18 0 5.767-2.587 5.768-5.766.001-3.182-2.585-5.766-5.768-5.766zm9.969 5.766c0 5.518-4.482 10-10 10-1.744 0-3.376-.45-4.807-1.237L2 22l1.306-4.764C2.474 15.772 2 13.94 2 11.938 2 6.42 6.482 1.938 12 1.938c5.518 0 10 4.482 10 10z"/></svg>
+          <span>Order / Inquire on WhatsApp</span>
+        </a>
+
+        <!-- Add to Quote Cart -->
+        <button
+          id="add-btn-{{ product.sku }}"
+          onclick="addToCart('{{ product.sku }}', '{{ product.name|replace("'", "\\'") }}', '{{ product.category|replace("'", "\\'") }}', '{{ product.price or "Inquire" }}')"
+          class="py-3 px-6 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl transition flex items-center justify-center gap-2"
+        >
+          <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+          <span>Add to RFQ Cart</span>
+        </button>
+
+        {% if product.datasheet and product.datasheet != 'None' %}
+        <a
+          href="{{ product.datasheet }}"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5"
+        >
+          <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span>Datasheet</span>
+        </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Related Products in same category -->
+  {% if related and related|length > 0 %}
+  <div class="mt-12">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-lg font-bold text-slate-900">
+        Related Components in {{ product.category }}
+      </h2>
+      <a href="/?category={{ product.category|urlencode }}" class="text-xs font-semibold text-blue-600 hover:underline">
+        View All in {{ product.category }} &rarr;
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
+      {% for rel in related[:4] %}
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 hover:shadow-md transition flex flex-col justify-between">
+        <div>
+          <a href="/product/{{ rel.sku }}" class="block aspect-video bg-slate-50 rounded-xl p-2 mb-3 flex items-center justify-center overflow-hidden">
+            {% if rel.image and rel.image != 'None' %}
+            <img src="{{ rel.image }}" alt="{{ rel.name }}" class="max-h-full object-contain" loading="lazy" />
+            {% else %}
+            <svg class="w-8 h-8 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"/></svg>
+            {% endif %}
+          </a>
+          <span class="text-[10px] font-mono text-slate-400">SKU: {{ rel.sku }}</span>
+          <h3 class="text-xs font-bold text-slate-900 line-clamp-2 mt-0.5">
+            <a href="/product/{{ rel.sku }}" class="hover:text-blue-600">{{ rel.name }}</a>
+          </h3>
+        </div>
+        <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+          <span class="font-extrabold text-slate-900">
+            {% if rel.parsedPrice and rel.parsedPrice > 0 %}₹{{ "%.2f"|format(rel.parsedPrice) }}{% else %}RFQ{% endif %}
+          </span>
+          <a href="/product/{{ rel.sku }}" class="text-blue-600 font-semibold hover:underline">View &rarr;</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

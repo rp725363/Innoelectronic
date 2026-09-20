@@ -6,26 +6,22 @@ import os
 import time
 import urllib.parse
 import json
-from flask import Flask, request, jsonify, send_from_directory, abort, Response, render_template_string
+from flask import Flask, request, jsonify, send_from_directory, abort, Response, render_template
 import db
 
-app = Flask(__name__, static_folder=None)
+PUBLIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'public')
+TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
+
+app = Flask(
+    __name__,
+    static_folder=PUBLIC_DIR,
+    static_url_path='/static',
+    template_folder=TEMPLATES_DIR
+)
 
 # Ensure database tables and background sync are initialized
 db.init_db()
 db.ensure_data_ready_async()
-
-DIST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dist')
-
-
-def get_index_html_path():
-    dist_index = os.path.join(DIST_DIR, 'index.html')
-    if os.path.exists(dist_index):
-        return dist_index
-    src_index = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'index.html')
-    if os.path.exists(src_index):
-        return src_index
-    return dist_index
 
 
 # --- API Routes ---
@@ -279,115 +275,83 @@ def sitemap_xml():
     return Response('\n'.join(xml_lines), mimetype='application/xml')
 
 
-# --- Dynamic SEO Prerender & Static Serving ---
-
-def render_page_with_seo(product=None):
+@app.route('/')
+def home():
     """
-    Injects dynamic OpenGraph, Twitter, and Schema.org Product metadata
-    directly into index.html for search engine crawlers and social share bots.
+    Renders the clean, high-performance inventory showcase template.
+    Supports search query (?q=), category filter (?category=),
+    in-stock filter (?inStock=true), sorting (?sort=), and pagination (?page=).
     """
-    index_path = get_index_html_path()
-    if not os.path.exists(index_path):
-        return "Application building... please refresh in a moment.", 503
+    category = request.args.get('category', '').strip() or None
+    query = request.args.get('q', '').strip() or None
+    sort = request.args.get('sort', '').strip() or None
+    in_stock = request.args.get('inStock', '').lower() == 'true'
 
-    with open(index_path, 'r', encoding='utf-8') as f:
-        html = f.read()
+    try:
+        page = max(1, int(request.args.get('page', 1)))
+    except ValueError:
+        page = 1
 
-    if not product:
-        return html
+    limit = 24
 
-    # Build Product-Specific SEO tags
-    p_name = product.get('name', 'Electronic Component')
-    p_sku = product.get('sku', '')
-    p_cat = product.get('category', 'Components')
-    p_desc = product.get('description', '') or f"Genuine {p_name} ({p_sku}) in stock at Innoelectronics. Inquire for bulk pricing and technical datasheets."
-    p_img = product.get('image') or f"{request.host_url.rstrip('/')}/logo9.png"
-    p_price = product.get('parsedPrice') or 0.0
-    p_instock = product.get('inStock', True)
-
-    canonical_url = f"{request.host_url.rstrip('/')}/product/{urllib.parse.quote(p_sku)}"
-
-    # Replacement tags
-    seo_title = f"{p_name} (SKU: {p_sku}) - Innoelectronics"
-    seo_desc = (p_desc[:155] + '...') if len(p_desc) > 155 else p_desc
-
-    # Schema.org Product JSON-LD
-    product_schema = {
-        "@context": "https://schema.org",
-        "@type": "Product",
-        "name": p_name,
-        "sku": p_sku,
-        "category": p_cat,
-        "image": p_img,
-        "description": p_desc,
-        "brand": {
-            "@type": "Brand",
-            "name": "Innoelectronics"
-        },
-        "offers": {
-            "@type": "Offer",
-            "url": canonical_url,
-            "priceCurrency": "INR",
-            "price": str(p_price) if p_price > 0 else "Contact For Price",
-            "availability": "https://schema.org/InStock" if p_instock else "https://schema.org/OutOfStock",
-            "seller": {
-                "@type": "Organization",
-                "name": "Innoelectronics"
-            }
-        }
-    }
-    schema_script = f'<script type="application/ld+json">{json.dumps(product_schema, ensure_ascii=False)}</script>'
-
-    # Inject into HTML
-    html = html.replace(
-        '<title>Innoelectronics - Premier Electronic Components &amp; Connectors Store</title>',
-        f'<title>{seo_title}</title>'
+    summary = db.get_catalog_summary()
+    result = db.query_products(
+        category=category,
+        query=query,
+        sort=sort,
+        in_stock=in_stock,
+        page=page,
+        limit=limit
     )
-    html = html.replace('content="/logo9.png"', f'content="{p_img}"')
-    
-    # Inject Schema and custom OG tags right before </head>
-    injected_head = f"""
-    <meta name="description" content="{seo_desc}" />
-    <meta property="og:title" content="{seo_title}" />
-    <meta property="og:description" content="{seo_desc}" />
-    <meta property="og:image" content="{p_img}" />
-    <meta property="og:url" content="{canonical_url}" />
-    <meta name="twitter:title" content="{seo_title}" />
-    <meta name="twitter:description" content="{seo_desc}" />
-    <meta name="twitter:image" content="{p_img}" />
-    <link rel="canonical" href="{canonical_url}" />
-    {schema_script}
-    </head>"""
 
-    html = html.replace('</head>', injected_head, 1)
-    return html
+    return render_template(
+        'index.html',
+        items=result['items'],
+        total_items=result['total'],
+        page=result['page'],
+        limit=result['limit'],
+        total_pages=result['totalPages'],
+        categories=summary['categories'],
+        total_count=summary['totalProducts'],
+        selected_category=category or '',
+        search_query=query or '',
+        in_stock_only=in_stock,
+        sort_order=sort or ''
+    )
 
 
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve_frontend(path):
+@app.route('/product/<sku>')
+def product_detail_page(sku):
     """
-    Serves static files, routes /product/<sku> with dynamic SEO prerendering,
-    and falls back to Single Page Application.
+    Renders clean, dedicated product detail page with Schema.org JSON-LD
+    and direct WhatsApp inquiry link.
     """
-    if path.startswith('api/'):
+    product, related = db.get_product_by_sku(sku)
+    if not product:
         abort(404)
 
-    # 1. Check if path is a static file that exists in dist
-    target_file = os.path.join(DIST_DIR, path)
-    if path and os.path.exists(target_file) and not os.path.isdir(target_file):
-        return send_from_directory(DIST_DIR, path)
+    return render_template(
+        'product.html',
+        product=product,
+        related=related
+    )
 
-    # 2. Check for /product/<sku> dynamic SEO injection
-    if path.startswith('product/'):
-        sku_candidate = path.split('product/', 1)[1].strip()
-        if sku_candidate:
-            product, _ = db.get_product_by_sku(sku_candidate)
-            if product:
-                return render_page_with_seo(product)
 
-    # 3. Default SPA fallback
-    return render_page_with_seo(None)
+@app.route('/static/<path:filename>')
+def serve_static(filename):
+    """Serves static assets from public/ directory."""
+    return send_from_directory(PUBLIC_DIR, filename)
+
+
+@app.route('/<path:filename>')
+def serve_root_asset(filename):
+    """Serves root assets like logo9.png, favicon.ico, etc."""
+    if filename.startswith('api/'):
+        abort(404)
+    file_path = os.path.join(PUBLIC_DIR, filename)
+    if os.path.exists(file_path) and not os.path.isdir(file_path):
+        return send_from_directory(PUBLIC_DIR, filename)
+    abort(404)
 
 
 if __name__ == '__main__':

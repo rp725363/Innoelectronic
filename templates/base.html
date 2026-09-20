@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50 text-slate-800">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Innoelectronics - Premier Electronic Components & Connectors Inventory{% endblock %}</title>
+  
+  <meta name="description" content="{% block meta_desc %}Browse Innoelectronics live catalog of 3,400+ genuine electronic components, connectors, ICs, relays, and switches with immediate stock inquiries and WhatsApp RFQ.{% endblock %}" />
+  <meta property="og:site_name" content="Innoelectronics" />
+  <meta property="og:title" content="{% block og_title %}Innoelectronics - Electronic Components Inventory{% endblock %}" />
+  <meta property="og:description" content="{% block og_desc %}Live inventory of 3,400+ industrial connectors, semiconductors, and passive components.{% endblock %}" />
+  <meta property="og:image" content="{% block og_image %}{{ url_for('serve_static', filename='logo9.png', _external=True) }}{% endblock %}" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="{% block twitter_title %}Innoelectronics Inventory{% endblock %}" />
+  <meta name="twitter:description" content="{% block twitter_desc %}Genuine electronic components & connectors in stock.{% endblock %}" />
+  <meta name="twitter:image" content="{% block twitter_image %}{{ url_for('serve_static', filename='logo9.png', _external=True) }}{% endblock %}" />
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png" />
+
+  <!-- Tailwind CSS CDN for lightweight zero-build styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+              950: '#0f172a'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  
+  <!-- Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .line-clamp-2 {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="min-h-full flex flex-col bg-slate-50 text-slate-800 antialiased selection:bg-blue-600 selection:text-white">
+
+  <!-- Top Announcement Bar -->
+  <div class="bg-slate-900 text-slate-300 text-xs py-2 px-4 border-b border-slate-800">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="inline-block w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="font-medium text-slate-200">Live Inventory Online</span>
+        <span class="text-slate-500">•</span>
+        <span>Over 3,400+ Components Synchronized</span>
+      </div>
+      <div class="flex items-center gap-4 text-xs">
+        <a href="tel:+919428447698" class="hover:text-white transition flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+          +91 94284 47698
+        </a>
+        <span class="text-slate-600 hidden sm:inline">|</span>
+        <a href="mailto:sales.innoelectronics@gmail.com" class="hover:text-white transition hidden sm:flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+          sales.innoelectronics@gmail.com
+        </a>
+        <span class="text-slate-600">|</span>
+        <a href="https://wa.me/919428447698?text=Hello%20Innoelectronics%2C%20I%20would%20like%20to%20inquire%20about%20electronic%20components." target="_blank" rel="noopener noreferrer" class="text-emerald-400 hover:text-emerald-300 font-semibold flex items-center gap-1">
+          <span>WhatsApp RFQ</span> &rarr;
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Navigation Header -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between gap-4">
+      
+      <!-- Brand Logo -->
+      <a href="/" class="flex items-center gap-3 group focus:outline-none">
+        <div class="h-10 w-10 sm:h-12 sm:w-12 rounded-xl bg-slate-900 flex items-center justify-center p-1.5 border border-slate-800 shadow-xs">
+          <img src="/static/logo9_transparent.png" alt="Innoelectronics" class="h-full w-full object-contain" onerror="this.src='/logo9.png'" />
+        </div>
+        <div class="flex flex-col">
+          <span class="text-lg sm:text-xl font-extrabold tracking-tight text-slate-900 group-hover:text-blue-600 transition">INNOELECTRONICS</span>
+          <span class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Components & Connectors</span>
+        </div>
+      </a>
+
+      <!-- Quick Actions (Quote Cart & WhatsApp) -->
+      <div class="flex items-center gap-3">
+        <button id="open-cart-btn" onclick="toggleCartDrawer()" class="relative inline-flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 transition">
+          <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+          <span class="hidden sm:inline">RFQ Quote Cart</span>
+          <span id="cart-badge" class="ml-0.5 inline-flex items-center justify-center px-2 py-0.5 text-xs font-bold leading-none text-white bg-blue-600 rounded-full">0</span>
+        </button>
+
+        <a href="https://wa.me/919428447698?text=Hello%20Innoelectronics%2C%20I%20have%20an%20inquiry%20regarding%20component%20pricing." target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm transition">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.983.538 1.954.82 2.791.82 3.18 0 5.767-2.587 5.768-5.766.001-3.182-2.585-5.766-5.768-5.766zm9.969 5.766c0 5.518-4.482 10-10 10-1.744 0-3.376-.45-4.807-1.237L2 22l1.306-4.764C2.474 15.772 2 13.94 2 11.938 2 6.42 6.482 1.938 12 1.938c5.518 0 10 4.482 10 10z"/></svg>
+          <span class="hidden sm:inline">Direct Inquiry</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Page Content -->
+  <main class="flex-grow">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-slate-900 text-slate-400 text-sm mt-16 border-t border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <!-- Col 1 -->
+        <div class="md:col-span-2">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="h-9 w-9 rounded-lg bg-slate-800 flex items-center justify-center p-1 border border-slate-700">
+              <img src="/static/logo9_transparent.png" alt="Innoelectronics" class="h-full w-full object-contain" onerror="this.src='/logo9.png'" />
+            </div>
+            <span class="text-lg font-bold text-white tracking-tight">INNOELECTRONICS</span>
+          </div>
+          <p class="text-slate-400 text-sm leading-relaxed max-w-md">
+            Direct wholesale supplier and catalog of industrial connectors, semiconductors, passive components, relays, and terminal blocks. Fast delivery across India and international procurement.
+          </p>
+          <div class="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-400">
+            <span class="px-2.5 py-1 rounded bg-slate-800 border border-slate-700">Google Sheet Live Sync</span>
+            <span class="px-2.5 py-1 rounded bg-slate-800 border border-slate-700">PythonAnywhere Production Ready</span>
+            <span class="px-2.5 py-1 rounded bg-slate-800 border border-slate-700">SQLite FTS5 Indexed</span>
+          </div>
+        </div>
+
+        <!-- Col 2: Quick Links -->
+        <div>
+          <h4 class="text-white font-semibold mb-4 text-xs uppercase tracking-wider">Catalog Hubs</h4>
+          <ul class="space-y-2 text-sm">
+            <li><a href="/?category=Connectors" class="hover:text-white transition">Connectors (1,400+)</a></li>
+            <li><a href="/?category=Integrated+Circuits+(ICs)" class="hover:text-white transition">Integrated Circuits</a></li>
+            <li><a href="/?category=Relays+%26+Switches" class="hover:text-white transition">Relays & Switches</a></li>
+            <li><a href="/?category=Capacitors" class="hover:text-white transition">Capacitors & Passives</a></li>
+            <li><a href="/sitemap.xml" class="hover:text-white transition" target="_blank">XML Sitemap (SEO)</a></li>
+          </ul>
+        </div>
+
+        <!-- Col 3: Contact & RFQ -->
+        <div>
+          <h4 class="text-white font-semibold mb-4 text-xs uppercase tracking-wider">Fast RFQ Support</h4>
+          <p class="text-sm mb-3">Reach out directly for bulk discounts, custom wiring harnesses, and sample datasheets.</p>
+          <div class="space-y-2">
+            <a href="tel:+919428447698" class="flex items-center gap-2 text-slate-200 hover:text-white font-medium">
+              <span>📞</span> +91 94284 47698
+            </a>
+            <a href="mailto:sales.innoelectronics@gmail.com" class="flex items-center gap-2 text-slate-200 hover:text-white font-medium">
+              <span>✉️</span> sales.innoelectronics@gmail.com
+            </a>
+            <a href="https://wa.me/919428447698" target="_blank" class="flex items-center gap-2 text-emerald-400 hover:text-emerald-300 font-semibold">
+              <span>💬</span> WhatsApp Direct Order
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-12 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500 gap-4">
+        <div>&copy; 2026 Innoelectronics. All rights reserved. Industrial Electronics Distribution.</div>
+        <div class="flex items-center gap-4">
+          <a href="/robots.txt" class="hover:text-slate-400">Robots.txt</a>
+          <span>•</span>
+          <a href="/sitemap.xml" class="hover:text-slate-400">Sitemap</a>
+          <span>•</span>
+          <a href="/api/health" class="hover:text-slate-400">API Health</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Slide-Over Quotation Cart Drawer -->
+  <div id="cart-drawer" class="fixed inset-0 z-50 overflow-hidden hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity" onclick="toggleCartDrawer()"></div>
+    <div class="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
+      <div class="pointer-events-auto w-screen max-w-md bg-white shadow-2xl flex flex-col">
+        <!-- Drawer Header -->
+        <div class="p-6 bg-slate-900 text-white flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+            <h2 class="text-base font-bold tracking-tight">Request for Quote (RFQ) Cart</h2>
+          </div>
+          <button onclick="toggleCartDrawer()" class="text-slate-400 hover:text-white p-1 rounded-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+
+        <!-- Cart Items List -->
+        <div class="flex-1 overflow-y-auto p-6 space-y-4" id="cart-items-container">
+          <!-- Populated by JS -->
+          <div class="text-center py-12 text-slate-500">
+            <svg class="w-12 h-12 mx-auto text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            <p class="font-medium text-slate-700">Your quotation list is empty</p>
+            <p class="text-xs text-slate-400 mt-1">Browse the inventory and click "+ RFQ" on any component to build your quote.</p>
+          </div>
+        </div>
+
+        <!-- Drawer Footer with Customer Info & WhatsApp Action -->
+        <div class="border-t border-slate-200 p-6 bg-slate-50 space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Your Name / Company</label>
+            <input type="text" id="rfq-name" placeholder="e.g. Acme Technologies" class="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Phone / Mobile</label>
+            <input type="tel" id="rfq-phone" placeholder="e.g. +91 98765 43210" class="w-full text-xs px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" />
+          </div>
+          <button id="send-whatsapp-rfq-btn" onclick="submitWhatsAppRFQ()" class="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm shadow-md flex items-center justify-center gap-2 transition">
+            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.983.538 1.954.82 2.791.82 3.18 0 5.767-2.587 5.768-5.766.001-3.182-2.585-5.766-5.768-5.766zm9.969 5.766c0 5.518-4.482 10-10 10-1.744 0-3.376-.45-4.807-1.237L2 22l1.306-4.764C2.474 15.772 2 13.94 2 11.938 2 6.42 6.482 1.938 12 1.938c5.518 0 10 4.482 10 10z"/></svg>
+            <span>Send Quote Request on WhatsApp</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shared Cart & Client Logic -->
+  <script>
+    // Cart persistence in localStorage
+    let rfqCart = [];
+    try {
+      rfqCart = JSON.parse(localStorage.getItem('inno_rfq_cart') || '[]');
+    } catch(e) {
+      rfqCart = [];
+    }
+
+    function updateCartUI() {
+      const badge = document.getElementById('cart-badge');
+      if (badge) {
+        badge.innerText = rfqCart.reduce((sum, itm) => sum + (itm.quantity || 1), 0);
+      }
+      localStorage.setItem('inno_rfq_cart', JSON.stringify(rfqCart));
+
+      const container = document.getElementById('cart-items-container');
+      if (!container) return;
+
+      if (rfqCart.length === 0) {
+        container.innerHTML = `
+          <div class="text-center py-12 text-slate-500">
+            <svg class="w-12 h-12 mx-auto text-slate-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            <p class="font-medium text-slate-700">Your quotation list is empty</p>
+            <p class="text-xs text-slate-400 mt-1">Browse the inventory and click "+ RFQ" on any component to build your quote.</p>
+          </div>
+        `;
+        return;
+      }
+
+      let html = '';
+      rfqCart.forEach((item, idx) => {
+        html += `
+          <div class="flex items-center justify-between gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs">
+            <div class="flex-1 min-w-0">
+              <div class="font-bold text-slate-900 truncate">${item.name}</div>
+              <div class="text-slate-500">SKU: <span class="font-mono">${item.sku}</span> | ${item.category || ''}</div>
+              <div class="text-blue-600 font-semibold mt-0.5">${item.price || 'Inquire Price'}</div>
+            </div>
+            <div class="flex items-center gap-2">
+              <input type="number" min="1" value="${item.quantity || 1}" onchange="changeQuantity(${idx}, this.value)" class="w-14 px-2 py-1 border border-slate-300 rounded text-center text-xs font-semibold focus:ring-1 focus:ring-blue-500" />
+              <button onclick="removeCartItem(${idx})" class="p-1 text-slate-400 hover:text-red-600 rounded">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function addToCart(sku, name, category, price) {
+      const existing = rfqCart.find(i => i.sku === sku);
+      if (existing) {
+        existing.quantity = (existing.quantity || 1) + 1;
+      } else {
+        rfqCart.push({ sku, name, category, price, quantity: 1 });
+      }
+      updateCartUI();
+      // Visual feedback
+      const btn = document.getElementById(`add-btn-${sku}`);
+      if (btn) {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✓ Added';
+        btn.classList.add('bg-emerald-600', 'text-white');
+        setTimeout(() => {
+          btn.innerHTML = orig;
+          btn.classList.remove('bg-emerald-600', 'text-white');
+        }, 1200);
+      }
+    }
+
+    function removeCartItem(idx) {
+      rfqCart.splice(idx, 1);
+      updateCartUI();
+    }
+
+    function changeQuantity(idx, val) {
+      const q = parseInt(val) || 1;
+      rfqCart[idx].quantity = Math.max(1, q);
+      updateCartUI();
+    }
+
+    function toggleCartDrawer() {
+      const drawer = document.getElementById('cart-drawer');
+      if (drawer) {
+        drawer.classList.toggle('hidden');
+      }
+    }
+
+    function submitWhatsAppRFQ() {
+      if (rfqCart.length === 0) {
+        alert('Your quote cart is empty. Please add items before submitting.');
+        return;
+      }
+      const name = document.getElementById('rfq-name').value.trim() || 'Client';
+      const phone = document.getElementById('rfq-phone').value.trim();
+
+      let msg = `*RFQ Inquiry from Innoelectronics Website*\n`;
+      msg += `*Customer:* ${name}\n`;
+      if (phone) msg += `*Contact:* ${phone}\n`;
+      msg += `\n*Requested Components:*\n`;
+
+      rfqCart.forEach((item, idx) => {
+        msg += `${idx + 1}. *${item.name}*\n   SKU: ${item.sku} | Qty: ${item.quantity || 1} pcs\n`;
+      });
+
+      msg += `\nPlease confirm pricing, stock availability, and lead time. Thank you!`;
+
+      const waUrl = `https://wa.me/919428447698?text=${encodeURIComponent(msg)}`;
+      window.open(waUrl, '_blank');
+    }
+
+    document.addEventListener('DOMContentLoaded', updateCartUI);
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
