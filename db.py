@@ -22,12 +22,36 @@ _sync_lock = threading.Lock()
 _is_syncing = False
 
 
+def get_urllib_opener():
+    """Builds an opener with proxy support if running on PythonAnywhere."""
+    is_pa = (
+        'PYTHONANYWHERE_DOMAIN' in os.environ or
+        'PYTHONANYWHERE_SITE' in os.environ or
+        os.path.exists('/var/log/pythonanywhere') or
+        'pythonanywhere' in os.environ.get('HOSTNAME', '').lower()
+    )
+    if is_pa:
+        proxy_handler = urllib.request.ProxyHandler({
+            'http': 'http://proxy.server:3128',
+            'https': 'http://proxy.server:3128'
+        })
+        return urllib.request.build_opener(proxy_handler)
+    return urllib.request.build_opener()
+
+
 def get_db_connection():
-    """Returns a SQLite connection configured for high performance."""
+    """
+    Returns a SQLite connection configured for PythonAnywhere NFS filesystem
+    and high-concurrency read operations.
+    """
     conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode = WAL;")
+    # Journal mode DELETE/TRUNCATE is strictly required on PythonAnywhere NFS.
+    # WAL mode causes 'disk I/O error' or malformed db on networked filesystems.
+    conn.execute("PRAGMA journal_mode = DELETE;")
+    conn.execute("PRAGMA busy_timeout = 10000;")  # 10s wait for locks
     conn.execute("PRAGMA synchronous = NORMAL;")
+    conn.execute("PRAGMA temp_store = MEMORY;")
     conn.execute("PRAGMA cache_size = -64000;")  # 64MB cache
     return conn
 
@@ -174,7 +198,8 @@ def sync_products_from_sheet(force=False):
                 GOOGLE_SHEET_URL,
                 headers={'User-Agent': 'Mozilla/5.0 InnoelectronicsCatalogSync/2.0'}
             )
-            with urllib.request.urlopen(req, timeout=30) as resp:
+            opener = get_urllib_opener()
+            with opener.open(req, timeout=20) as resp:
                 content = resp.read().decode('utf-8', errors='replace')
 
             reader = list(csv.reader(io.StringIO(content)))
@@ -236,6 +261,10 @@ def sync_products_from_sheet(force=False):
                     now_ts
                 ))
 
+            # Safety validation: ensure we parsed a valid dataset before touching existing catalog
+            if len(rows_to_insert) < 100:
+                raise ValueError(f"Parsed only {len(rows_to_insert)} items from sheet. Aborting sync to preserve catalog.")
+
             # Atomic transaction
             with conn:
                 conn.execute("DELETE FROM products;")
@@ -267,28 +296,33 @@ def sync_products_from_sheet(force=False):
 
 
 def ensure_data_ready_async():
-    """Runs a background check to ensure catalog is populated without blocking web requests."""
-    def worker():
-        try:
-            init_db()
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT COUNT(*) as count FROM products;")
-            row = cursor.fetchone()
-            count = row['count'] if row else 0
-            conn.close()
+    """
+    Ensures the SQLite database is initialized. If the catalog is already populated,
+    avoids spawning background threads during WSGI startup (which can cause worker hangs
+    or timeout issues under uWSGI on PythonAnywhere).
+    """
+    try:
+        init_db()
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) as count FROM products;")
+        row = cursor.fetchone()
+        count = row['count'] if row else 0
+        conn.close()
 
-            if count == 0:
-                print("[Init] Local catalog empty. Initiating background sync...")
-                sync_products_from_sheet(force=True)
-            else:
-                # Background sync if older than TTL
-                sync_products_from_sheet(force=False)
-        except Exception as err:
-            print(f"[Background Sync Error]: {err}")
-
-    t = threading.Thread(target=worker, daemon=True)
-    t.start()
+        if count == 0:
+            print("[Init] Local catalog empty. Initiating background sync...")
+            def worker():
+                try:
+                    sync_products_from_sheet(force=True)
+                except Exception as err:
+                    print(f"[Background Sync Error]: {err}")
+            t = threading.Thread(target=worker, daemon=True)
+            t.start()
+        else:
+            print(f"[Init] Database ready with {count} products. WSGI startup is instant and non-blocking.")
+    except Exception as err:
+        print(f"[Init Warning]: {err}")
 
 
 # --- Query Helpers ---

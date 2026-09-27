@@ -33,9 +33,9 @@ In this repository, download or copy the file:
    mkdir -p innoelectronics
    unzip -o innoelectronics_pythonanywhere.zip -d innoelectronics
    cd innoelectronics
-   pip install -r requirements.txt
+   pip3.10 install --user -r requirements.txt
    ```
-*(Note: `requirements.txt` only has `Flask` and `requests`, so installation takes under 10 seconds!)*
+*(Note: If you choose Python 3.9 or 3.11, use `pip3.9` or `pip3.11` respectively. `requirements.txt` only has `Flask` and `requests`, so installation takes under 10 seconds!)*
 
 ---
 
@@ -43,7 +43,7 @@ In this repository, download or copy the file:
 1. Go to the **Web** tab in PythonAnywhere.
 2. Click **Add a new web app**.
 3. Select your domain (e.g. `yourusername.pythonanywhere.com` or custom domain).
-4. Choose **Manual configuration** -> **Python 3.10** (or 3.9/3.11).
+4. Choose **Manual configuration** -> **Python 3.10** (recommended).
 5. In the Web App configuration settings:
    - **Source code directory:** `/home/yourusername/innoelectronics`
    - **Working directory:** `/home/yourusername/innoelectronics`
@@ -63,6 +63,8 @@ project_home = '/home/yourusername/innoelectronics'
 if project_home not in sys.path:
     sys.path.insert(0, project_home)
 
+os.chdir(project_home)
+
 # Import the clean Flask application as 'application'
 from app import app as application
 ```
@@ -72,7 +74,16 @@ Click **Save** in the top right.
 
 ---
 
-### Step 4: Reload & Enjoy!
+### Step 4: Configure Static Files (Recommended for Max Speed)
+In the **Web** tab, scroll down to the **Static files** section and add:
+- **URL:** `/static/`
+- **Directory:** `/home/yourusername/innoelectronics/public`
+
+*(This allows PythonAnywhere's Nginx server to serve images, styles, and logos instantly without loading Python workers).*
+
+---
+
+### Step 5: Reload & Enjoy!
 1. Return to the **Web** tab.
 2. Click the green **Reload yourusername.pythonanywhere.com** button.
 3. Open your website:
@@ -81,6 +92,21 @@ Click **Save** in the top right.
    - Category filtering & In-Stock toggle.
    - Dual Grid / Table view.
    - WhatsApp BOM RFQ checkout.
+
+---
+
+## 🔧 Troubleshooting & Solutions for Common PythonAnywhere Issues
+
+If you see **"Something went wrong :-("**:
+Check your error log in the **Web** tab under **Log files** -> `yourusername.pythonanywhere.com.error.log`.
+
+| Common Challenge | Cause | Verified Fix |
+|---|---|---|
+| `ModuleNotFoundError: No module named 'flask'` | Flask installed into a different Python version | Run `pip3.10 install --user -r requirements.txt` in the console (match your web app's Python version). |
+| `sqlite3.OperationalError: disk I/O error` | SQLite WAL mode on PythonAnywhere NFS network drive | **Resolved in this update:** Database and connections now use NFS-compliant `DELETE` journal mode and 10s busy timeout. |
+| `504 Gateway Time-out` on reload | Background sync thread hanging or waiting on network | **Resolved in this update:** Startup does not spawn background threads if `catalog.db` is already loaded with 3,428 items. Startup is now sub-millisecond. |
+| Google Sheet sync fails on Free Tier | PythonAnywhere free accounts block outbound requests unless routed through proxy | **Resolved in this update:** `db.py` automatically detects PythonAnywhere and routes through `http://proxy.server:3128`. |
+| Templates or static files not found | Current working directory is not the project root | **Resolved in this update:** `wsgi.py` and WSGI snippet include `os.chdir(project_home)`. |
 
 ---
 
