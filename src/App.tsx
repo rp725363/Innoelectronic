@@ -41,14 +41,20 @@ import { getCategoryFallbackImage, CATEGORY_METADATA } from './data/categoryImag
 
 const CART_STORAGE_KEY = 'inno_cart_items_v1';
 
+const DEFAULT_CATEGORIES: CategorySummary[] = Object.keys(CATEGORY_METADATA).map((name) => ({
+  name,
+  count: CATEGORY_METADATA[name].badge ? parseInt(CATEGORY_METADATA[name].badge!.replace(/\D/g, ''), 10) || 50 : 50,
+  sampleImage: CATEGORY_METADATA[name].image,
+}));
+
 export default function App() {
   // Navigation View State: 'home' (landing with categories and company info, NO product cards) vs 'catalog' (full products list, filters & cards)
   const [currentView, setCurrentView] = useState<'home' | 'catalog'>('home');
 
-  // State: Catalog & Categories
-  const [categories, setCategories] = useState<CategorySummary[]>([]);
-  const [totalCatalogCount, setTotalCatalogCount] = useState<number>(0);
-  const [loadingCatalog, setLoadingCatalog] = useState(true);
+  // State: Catalog & Categories - Pre-populated with defaults so categories are always visible instantly
+  const [categories, setCategories] = useState<CategorySummary[]>(DEFAULT_CATEGORIES);
+  const [totalCatalogCount, setTotalCatalogCount] = useState<number>(3428);
+  const [loadingCatalog, setLoadingCatalog] = useState(false);
 
   // State: Filter & Query
   const [filters, setFilters] = useState<FilterState>({

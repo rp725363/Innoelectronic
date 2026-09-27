@@ -327,6 +327,28 @@ def ensure_data_ready_async():
 
 # --- Query Helpers ---
 
+CATEGORY_FALLBACK_IMAGES = {
+    'Connectors': 'https://res.cloudinary.com/dks3wmj5e/image/upload/v1744911281/Molex_KK_2.54mm_Connector_16-Pin_a49ilf.webp',
+    'Terminal Blocks': 'https://res.cloudinary.com/dks3wmj5e/image/upload/v1745262918/1_zq4net.jpg',
+    'Microcontrollers': 'https://images.unsplash.com/photo-1608564697071-ddf911d81370?w=600&auto=format&fit=crop&q=80',
+    'Diode': 'https://res.cloudinary.com/dks3wmj5e/image/upload/v1745675621/1N4001_akblst.jpg',
+    'Testing Tools': 'https://res.cloudinary.com/dks3wmj5e/image/upload/v1765724737/UNI-T_UT33D_Digital_Multimeter_wh4xlb.webp',
+    'Soldering Tools': 'https://res.cloudinary.com/dks3wmj5e/image/upload/v1769226120/Soldering_Iron_60W_adezik.jpg',
+    'ESD Equipment': 'https://res.cloudinary.com/dks3wmj5e/image/upload/v1761156989/ESD_Wrist_Strap_cqsftq.webp',
+    'Cleaning Tools': 'https://res.cloudinary.com/dks3wmj5e/image/upload/v1777709737/Isopropyl_Alcohol_IPA_f3laoo.jpg',
+    'Storage': 'https://res.cloudinary.com/dks3wmj5e/image/upload/v1761157439/Ahamo_20-Gid_Transparent_Jewelry_Organizer_Box_do8meh.webp',
+    'Resistor': 'https://images.unsplash.com/photo-1593784991095-a205069470b6?w=600&auto=format&fit=crop&q=80',
+    'Capacitor': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=80',
+    'IGBT': 'https://images.unsplash.com/photo-1608564697071-ddf911d81370?w=600&auto=format&fit=crop&q=80',
+    'Heat Sinks': 'https://images.unsplash.com/photo-1555680202-c86f0e12f086?w=600&auto=format&fit=crop&q=80',
+    'Hand Tools': 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?w=600&auto=format&fit=crop&q=80',
+    'Power Tools': 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=600&auto=format&fit=crop&q=80',
+    'Mosfet': 'https://images.unsplash.com/photo-1608564697071-ddf911d81370?w=600&auto=format&fit=crop&q=80',
+    'Inductors': 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=80',
+    'transistors': 'https://images.unsplash.com/photo-1593784991095-a205069470b6?w=600&auto=format&fit=crop&q=80'
+}
+
+
 def get_catalog_summary():
     """Returns total count, categories list with product count and sample image."""
     conn = get_db_connection()
@@ -344,7 +366,15 @@ def get_catalog_summary():
     GROUP BY category
     ORDER BY count DESC;
     """)
-    categories = [dict(row) for row in cursor.fetchall()]
+    categories = []
+    for row in cursor.fetchall():
+        cat_dict = dict(row)
+        if not cat_dict.get('sampleImage') or cat_dict['sampleImage'] == 'x':
+            cat_dict['sampleImage'] = CATEGORY_FALLBACK_IMAGES.get(
+                cat_dict['name'],
+                'https://res.cloudinary.com/dks3wmj5e/image/upload/v1744911281/Molex_KK_2.54mm_Connector_16-Pin_a49ilf.webp'
+            )
+        categories.append(cat_dict)
 
     conn.close()
     return {
