@@ -11,6 +11,7 @@ import db
 
 PUBLIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'public')
 TEMPLATES_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
+DIST_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'dist')
 
 app = Flask(
     __name__,
@@ -277,10 +278,13 @@ def sitemap_xml():
 @app.route('/')
 def home():
     """
-    Renders the clean, high-performance inventory showcase template.
-    Supports search query (?q=), category filter (?category=),
-    in-stock filter (?inStock=true), sorting (?sort=), and pagination (?page=).
+    Renders the homepage. If React SPA build (dist/index.html) is available,
+    serves it directly. Otherwise renders server-side template with full catalog.
     """
+    dist_index = os.path.join(DIST_DIR, 'index.html')
+    if os.path.exists(dist_index) and not request.args.get('ssr'):
+        return send_from_directory(DIST_DIR, 'index.html')
+
     category = request.args.get('category', '').strip() or None
     query = request.args.get('q', '').strip() or None
     sort = request.args.get('sort', '').strip() or None
@@ -325,6 +329,10 @@ def product_detail_page(sku):
     Renders clean, dedicated product detail page with Schema.org JSON-LD
     and direct WhatsApp inquiry link.
     """
+    dist_index = os.path.join(DIST_DIR, 'index.html')
+    if os.path.exists(dist_index) and not request.args.get('ssr'):
+        return send_from_directory(DIST_DIR, 'index.html')
+
     product, related = db.get_product_by_sku(sku)
     if not product:
         abort(404)
@@ -336,6 +344,18 @@ def product_detail_page(sku):
     )
 
 
+@app.route('/assets/<path:filename>')
+def serve_dist_assets(filename):
+    """Serves compiled frontend assets (JS, CSS) from dist/assets."""
+    assets_dir = os.path.join(DIST_DIR, 'assets')
+    if os.path.exists(os.path.join(assets_dir, filename)):
+        return send_from_directory(assets_dir, filename)
+    public_assets = os.path.join(PUBLIC_DIR, 'assets')
+    if os.path.exists(os.path.join(public_assets, filename)):
+        return send_from_directory(public_assets, filename)
+    abort(404)
+
+
 @app.route('/static/<path:filename>')
 def serve_static(filename):
     """Serves static assets from public/ directory."""
@@ -344,12 +364,16 @@ def serve_static(filename):
 
 @app.route('/<path:filename>')
 def serve_root_asset(filename):
-    """Serves root assets like logo9.png, favicon.ico, etc."""
+    """Serves root assets like logo9.png, favicon.ico, or SPA fallback."""
     if filename.startswith('api/'):
         abort(404)
-    file_path = os.path.join(PUBLIC_DIR, filename)
-    if os.path.exists(file_path) and not os.path.isdir(file_path):
-        return send_from_directory(PUBLIC_DIR, filename)
+    for folder in [DIST_DIR, PUBLIC_DIR]:
+        file_path = os.path.join(folder, filename)
+        if os.path.exists(file_path) and not os.path.isdir(file_path):
+            return send_from_directory(folder, filename)
+    dist_index = os.path.join(DIST_DIR, 'index.html')
+    if os.path.exists(dist_index):
+        return send_from_directory(DIST_DIR, 'index.html')
     abort(404)
 
 

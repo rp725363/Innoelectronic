@@ -1,10 +1,15 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
+import type { Request, Response } from 'express';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 const app = express();
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 app.use(express.json());
 
@@ -29,9 +34,42 @@ let allProductsList: Product[] = [];
 let sheetCacheTimestamp = 0;
 const CACHE_TTL_MS = 120 * 1000;
 
+function resolvePublicPath(): string {
+  const candidates = [
+    path.join(process.cwd(), 'public'),
+    path.join(__dirname, '..', 'public'),
+    path.join(__dirname, 'public'),
+    __dirname,
+    '/app/applet/public',
+    '/app/applet/dist',
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(path.join(c, 'catalog.json'))) {
+      return c;
+    }
+  }
+  return path.join(process.cwd(), 'public');
+}
+
+function resolveDistPath(): string {
+  const candidates = [
+    path.join(process.cwd(), 'dist'),
+    __dirname,
+    path.join(__dirname, 'dist'),
+    '/app/applet/dist',
+  ];
+  for (const c of candidates) {
+    if (fs.existsSync(path.join(c, 'index.html'))) {
+      return c;
+    }
+  }
+  return path.join(process.cwd(), 'dist');
+}
+
 // Preload baseline catalog from local verified catalog.json
 try {
-  const localCatalogPath = path.join(process.cwd(), 'public', 'catalog.json');
+  const publicDir = resolvePublicPath();
+  const localCatalogPath = path.join(publicDir, 'catalog.json');
   if (fs.existsSync(localCatalogPath)) {
     const raw = fs.readFileSync(localCatalogPath, 'utf-8');
     const parsed = JSON.parse(raw);
@@ -48,7 +86,7 @@ try {
     }
     sheetCache = grouped;
     sheetCacheTimestamp = Date.now();
-    console.log(`[Init] Preloaded ${allProductsList.length} products in ${Object.keys(grouped).length} categories from catalog cache.`);
+    console.log(`[Init] Preloaded ${allProductsList.length} products in ${Object.keys(grouped).length} categories from catalog cache (${localCatalogPath}).`);
   }
 } catch (e: any) {
   console.warn('Failed to preload local catalog cache:', e.message);
@@ -453,7 +491,8 @@ app.all('/api/sync', async (req: Request, res: Response) => {
 
 // 8. SEO: Standard robots.txt
 app.get('/robots.txt', (req: Request, res: Response) => {
-  const robotsPath = path.join(process.cwd(), 'public', 'robots.txt');
+  const publicDir = resolvePublicPath();
+  const robotsPath = path.join(publicDir, 'robots.txt');
   if (fs.existsSync(robotsPath)) {
     res.type('text/plain').sendFile(robotsPath);
     return;
@@ -466,7 +505,8 @@ app.get('/robots.txt', (req: Request, res: Response) => {
 
 // 9. SEO: Standards-compliant XML Sitemap
 app.get('/sitemap.xml', (req: Request, res: Response) => {
-  const sitemapPath = path.join(process.cwd(), 'public', 'sitemap.xml');
+  const publicDir = resolvePublicPath();
+  const sitemapPath = path.join(publicDir, 'sitemap.xml');
   if (fs.existsSync(sitemapPath)) {
     res.type('application/xml').sendFile(sitemapPath);
     return;
@@ -500,10 +540,16 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
+    const distPath = resolveDistPath();
+    console.log(`[Production] Serving static assets from: ${distPath}`);
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
-      res.sendFile(path.join(distPath, 'index.html'));
+      const indexPath = path.join(distPath, 'index.html');
+      if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+      } else {
+        res.status(500).send('Production build not found. Please run npm run build.');
+      }
     });
   }
 
