@@ -5,8 +5,8 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { createServer as createViteServer } from 'vite';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const currentFilename = typeof __filename !== 'undefined' ? __filename : (import.meta.url ? fileURLToPath(import.meta.url) : process.cwd());
+const currentDirname = typeof __dirname !== 'undefined' ? __dirname : path.dirname(currentFilename);
 
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
@@ -37,9 +37,9 @@ const CACHE_TTL_MS = 120 * 1000;
 function resolvePublicPath(): string {
   const candidates = [
     path.join(process.cwd(), 'public'),
-    path.join(__dirname, '..', 'public'),
-    path.join(__dirname, 'public'),
-    __dirname,
+    path.join(currentDirname, '..', 'public'),
+    path.join(currentDirname, 'public'),
+    currentDirname,
     '/app/applet/public',
     '/app/applet/dist',
   ];
@@ -54,12 +54,12 @@ function resolvePublicPath(): string {
 function resolveDistPath(): string {
   const candidates = [
     path.join(process.cwd(), 'dist'),
-    __dirname,
-    path.join(__dirname, 'dist'),
+    path.join(currentDirname, 'dist'),
+    path.join(currentDirname, '..', 'dist'),
     '/app/applet/dist',
   ];
   for (const c of candidates) {
-    if (fs.existsSync(path.join(c, 'index.html'))) {
+    if (fs.existsSync(path.join(c, 'index.html')) && fs.existsSync(path.join(c, 'assets'))) {
       return c;
     }
   }
@@ -533,14 +533,19 @@ async function startServer() {
   // Preload products in background
   fetchProductsFromSheet().catch((e) => console.warn('Initial sheet load deferred:', e.message));
 
-  if (process.env.NODE_ENV !== 'production') {
+  const distPath = resolveDistPath();
+  const hasDist = fs.existsSync(path.join(distPath, 'index.html')) && fs.existsSync(path.join(distPath, 'assets'));
+  const isDev = process.env.NODE_ENV === 'development' || 
+    process.env.npm_lifecycle_event === 'dev' || 
+    (!process.env.NODE_ENV && !hasDist);
+
+  if (isDev) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = resolveDistPath();
     console.log(`[Production] Serving static assets from: ${distPath}`);
     app.use(express.static(distPath));
     app.get('*', (req, res) => {

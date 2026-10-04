@@ -135,11 +135,21 @@ export const CATEGORY_METADATA: Record<string, CategoryMeta> = {
   },
 };
 
+export function getCategoryMeta(categoryName: string): CategoryMeta | undefined {
+  if (!categoryName) return undefined;
+  if (CATEGORY_METADATA[categoryName]) return CATEGORY_METADATA[categoryName];
+  const lower = categoryName.trim().toLowerCase();
+  for (const key of Object.keys(CATEGORY_METADATA)) {
+    if (key.toLowerCase() === lower) return CATEGORY_METADATA[key];
+  }
+  return undefined;
+}
+
 export function getCategoryFallbackImage(categoryName: string, sampleImage?: string): string {
   if (sampleImage && sampleImage !== 'x' && sampleImage.trim().startsWith('http')) {
     return sampleImage.trim();
   }
-  const meta = CATEGORY_METADATA[categoryName];
+  const meta = getCategoryMeta(categoryName);
   if (meta && meta.image) {
     return meta.image;
   }

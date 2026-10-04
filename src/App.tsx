@@ -37,20 +37,42 @@ import { AboutModal } from './components/AboutModal';
 import { ContactModal } from './components/ContactModal';
 import { Footer } from './components/Footer';
 import { Logo } from './components/Logo';
-import { getCategoryFallbackImage, CATEGORY_METADATA } from './data/categoryImages';
+import { getCategoryFallbackImage, getCategoryMeta, CATEGORY_METADATA } from './data/categoryImages';
 import catalogData from './data/catalog.json';
 
 const CART_STORAGE_KEY = 'inno_cart_items_v1';
 
-const INITIAL_CATEGORIES: CategorySummary[] = (catalogData.categories || []).map((c: any) => ({
+const INITIAL_CATEGORIES: CategorySummary[] = (catalogData?.categories || []).map((c: any) => ({
   name: c.name,
   count: c.count || 50,
   sampleImage: getCategoryFallbackImage(c.name, c.sampleImage),
 }));
 
+// Determine initial view synchronously on initial application load in any environment
+const getInitialViewState = (): 'home' | 'catalog' => {
+  try {
+    if (typeof window === 'undefined') return 'home';
+    const url = new URL(window.location.href);
+    const cat = url.searchParams.get('category')?.trim();
+    const q = (url.searchParams.get('q') || url.searchParams.get('search'))?.trim();
+    const view = url.searchParams.get('view')?.trim();
+    const pathParts = window.location.pathname.split('/').filter(Boolean);
+
+    if (view === 'home' || pathParts[0] === 'home') {
+      return 'home';
+    }
+    if (cat || q || view === 'catalog' || pathParts[0] === 'catalog') {
+      return 'catalog';
+    }
+    return 'home';
+  } catch {
+    return 'home';
+  }
+};
+
 export default function App() {
   // Navigation View State: 'home' (landing with categories and company info, NO product cards) vs 'catalog' (full products list, filters & cards)
-  const [currentView, setCurrentView] = useState<'home' | 'catalog'>('home');
+  const [currentView, setCurrentView] = useState<'home' | 'catalog'>(getInitialViewState);
 
   // State: Catalog & Categories - Pre-populated with verified catalog data so categories are ALWAYS visible instantly
   const [categories, setCategories] = useState<CategorySummary[]>(INITIAL_CATEGORIES);
@@ -136,9 +158,10 @@ export default function App() {
     const handleUrlState = () => {
       try {
         const url = new URL(window.location.href);
-        const categoryParam = url.searchParams.get('category');
-        const searchParam = url.searchParams.get('q') || url.searchParams.get('search');
-        const skuParam = url.searchParams.get('sku') || url.searchParams.get('product');
+        const categoryParam = url.searchParams.get('category')?.trim() || '';
+        const searchParam = (url.searchParams.get('q') || url.searchParams.get('search'))?.trim() || '';
+        const skuParam = (url.searchParams.get('sku') || url.searchParams.get('product'))?.trim() || '';
+        const viewParam = url.searchParams.get('view')?.trim() || '';
         const pathParts = window.location.pathname.split('/').filter(Boolean);
 
         // Handle /product/:sku
@@ -160,15 +183,23 @@ export default function App() {
             .catch(() => {});
         }
 
+        const isCatalogIntent = Boolean(categoryParam || searchParam || viewParam === 'catalog' || pathParts[0] === 'catalog');
+
         if (categoryParam) {
           setFilters((prev) => ({ ...prev, category: categoryParam, page: 1 }));
           setCurrentView('catalog');
         } else if (searchParam) {
           setFilters((prev) => ({ ...prev, search: searchParam, page: 1 }));
           setCurrentView('catalog');
+        } else if (isCatalogIntent) {
+          setCurrentView('catalog');
+        } else {
+          // Explicitly ensure 'home' view is active when on root or navigating back to home
+          setCurrentView('home');
         }
       } catch (e) {
         console.warn('URL routing note:', e);
+        setCurrentView('home');
       }
     };
 
@@ -293,7 +324,7 @@ export default function App() {
       } catch {}
     } else {
       try {
-        window.history.pushState(null, '', '/');
+        window.history.pushState(null, '', '/?view=catalog');
       } catch {}
     }
     setCurrentView('catalog');
@@ -310,7 +341,7 @@ export default function App() {
     }));
     setCurrentView('catalog');
     try {
-      window.history.pushState(null, '', cat ? `/?category=${encodeURIComponent(cat)}` : '/');
+      window.history.pushState(null, '', cat ? `/?category=${encodeURIComponent(cat)}` : '/?view=catalog');
     } catch {}
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -526,7 +557,7 @@ export default function App() {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {categories.map((cat) => {
-                const meta = CATEGORY_METADATA[cat.name];
+                const meta = getCategoryMeta(cat.name);
                 const catImg = getCategoryFallbackImage(cat.name, cat.sampleImage);
                 return (
                   <button
@@ -915,7 +946,7 @@ export default function App() {
         {/* Categorical Products Showcase Banner */}
         {filters.category ? (
           (() => {
-            const currentCatMeta = CATEGORY_METADATA[filters.category];
+            const currentCatMeta = getCategoryMeta(filters.category);
             const currentCatSummary = categories.find(c => c.name === filters.category);
             const catImage = getCategoryFallbackImage(filters.category, currentCatSummary?.sampleImage);
             return (

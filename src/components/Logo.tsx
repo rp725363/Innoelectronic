@@ -38,7 +38,7 @@ export const Logo: React.FC<LogoProps> = ({
     const file = e.target.files?.[0];
     if (file) {
       if (file.size > 2 * 1024 * 1024) {
-        alert('Please choose an image under 2MB.');
+        console.warn('Custom logo file must be under 2MB.');
         return;
       }
       const reader = new FileReader();
