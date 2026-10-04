@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 
-// Brand logo assets
-import logo9Image from '../assets/images/logo9.png';
-import logo9Svg from '../assets/images/logo9.svg';
+// Brand logo asset paths from public directory
+const logo9Image = '/logo9.png';
+const logo9Svg = '/logo9.svg';
 
 interface LogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';

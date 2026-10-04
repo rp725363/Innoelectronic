@@ -535,9 +535,8 @@ async function startServer() {
 
   const distPath = resolveDistPath();
   const hasDist = fs.existsSync(path.join(distPath, 'index.html')) && fs.existsSync(path.join(distPath, 'assets'));
-  const isDev = process.env.NODE_ENV === 'development' || 
-    process.env.npm_lifecycle_event === 'dev' || 
-    (!process.env.NODE_ENV && !hasDist);
+  const isDev = process.env.npm_lifecycle_event === 'dev' || 
+    (process.env.NODE_ENV === 'development' && !hasDist);
 
   if (isDev) {
     const vite = await createViteServer({
@@ -545,6 +544,21 @@ async function startServer() {
       appType: 'spa',
     });
     app.use(vite.middlewares);
+    app.get('*', async (req, res, next) => {
+      try {
+        const url = req.originalUrl;
+        const htmlPath = path.resolve(currentDirname, 'index.html');
+        if (fs.existsSync(htmlPath)) {
+          let template = fs.readFileSync(htmlPath, 'utf-8');
+          template = await vite.transformIndexHtml(url, template);
+          res.status(200).set({ 'Content-Type': 'text/html' }).end(template);
+          return;
+        }
+        next();
+      } catch (e) {
+        next(e);
+      }
+    });
   } else {
     console.log(`[Production] Serving static assets from: ${distPath}`);
     app.use(express.static(distPath));

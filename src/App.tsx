@@ -603,9 +603,66 @@ export default function App() {
             <div className="mt-8 text-center">
               <button
                 onClick={() => handleNavigateToCatalog()}
+                className="px-6 py-3 bg-cyan-700 hover:bg-cyan-800 text-white font-semibold rounded-xl text-xs sm:text-sm inline-flex items-center space-x-2 shadow-sm transition-all"
+              >
+                <span>Browse All 18 Categories in Full Catalog</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </section>
+
+          {/* Featured Components Product Cards Showcase */}
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 pb-12 pt-2" id="featured-products">
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 gap-3">
+              <div>
+                <div className="flex items-center space-x-2 text-cyan-700 text-xs font-bold uppercase tracking-wider mb-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                  <span>Instant Dispatch &bull; Ready-to-Ship Stock</span>
+                </div>
+                <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Featured Components</h2>
+                <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                  Top-demanded connectors, microcontrollers, and electronic hardware with instant pricing
+                </p>
+              </div>
+              <button
+                onClick={() => handleNavigateToCatalog()}
+                className="inline-flex items-center text-xs sm:text-sm font-semibold text-cyan-700 hover:text-cyan-800 space-x-1"
+              >
+                <span>View All {totalCatalogCount} Parts</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+
+            {loadingProducts && products.length === 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="bg-white rounded-xl border border-slate-200 p-4 h-72 animate-pulse flex flex-col justify-between">
+                    <div className="h-36 bg-slate-100 rounded-lg mb-3"></div>
+                    <div className="h-4 bg-slate-100 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-slate-100 rounded w-1/2"></div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {products.slice(0, 8).map((product) => (
+                  <ProductCard
+                    key={product.sku}
+                    product={product}
+                    onSelectProduct={(p) => setSelectedProduct(p)}
+                    onAddToCart={handleAddToCart}
+                    viewMode="grid"
+                  />
+                ))}
+              </div>
+            )}
+
+            <div className="mt-8 text-center">
+              <button
+                onClick={() => handleNavigateToCatalog()}
                 className="px-6 py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-xs sm:text-sm inline-flex items-center space-x-2 shadow-sm transition-all"
               >
-                <span>Open All 3,400+ Components in Catalog</span>
+                <span>Open All {totalCatalogCount}+ Components in Catalog</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>

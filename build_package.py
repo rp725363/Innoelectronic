@@ -72,15 +72,8 @@ with zipfile.ZipFile(ZIP_PATH, 'w', zipfile.ZIP_DEFLATED) as zf:
                     zf.write(full_path, arcname=rel_path)
             print(f"  + Added {dname}/ directory")
 
-    # Optionally add dist directory if it exists
-    dist_dir = os.path.join(PROJECT_DIR, 'dist')
-    if os.path.exists(dist_dir):
-        for root, dirs, files in os.walk(dist_dir):
-            for f in files:
-                full_path = os.path.join(root, f)
-                rel_path = os.path.relpath(full_path, PROJECT_DIR)
-                zf.write(full_path, arcname=rel_path)
-        print("  + Added dist/ directory")
+    # Keep package lightweight and pure Python (Flask uses templates/ and public/)
+    pass
 
 size_mb = os.path.getsize(ZIP_PATH) / (1024 * 1024)
 print(f"[3/3] Package created successfully: {ZIP_NAME} ({round(size_mb, 2)} MB)")
