@@ -41,7 +41,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({
             <p>
               Innoelectronics is an authorized distributor and stockist specializing in high-reliability 
               connectors, microcontrollers, terminal blocks, passives, and hardware assembly tools. 
-              Our catalog spans over 3,400+ active parts with real-time stock synchronization and 
+              Our catalog spans over 3,400+ active parts with verified inventory levels and 
               direct manufacturer technical datasheets.
             </p>
           </div>

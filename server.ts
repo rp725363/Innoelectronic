@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import path from 'path';
+import fs from 'fs';
 import { createServer as createViteServer } from 'vite';
 
 const app = express();
@@ -22,11 +23,36 @@ interface Product {
   sheetIndex?: number;
 }
 
-// In-memory cache for sheet products with 120s TTL
+// In-memory cache for catalog products
 let sheetCache: { [category: string]: Product[] } | null = null;
 let allProductsList: Product[] = [];
 let sheetCacheTimestamp = 0;
 const CACHE_TTL_MS = 120 * 1000;
+
+// Preload baseline catalog from local verified catalog.json
+try {
+  const localCatalogPath = path.join(process.cwd(), 'public', 'catalog.json');
+  if (fs.existsSync(localCatalogPath)) {
+    const raw = fs.readFileSync(localCatalogPath, 'utf-8');
+    const parsed = JSON.parse(raw);
+    allProductsList = parsed.products.map((p: any, idx: number) => ({
+      ...p,
+      parsedPrice: typeof p.price === 'number' ? p.price : (parseFloat(String(p.price).replace(/[^\d.]/g, '')) || null),
+      inStock: (p.stock || 0) > 0,
+      sheetIndex: idx,
+    }));
+    const grouped: { [cat: string]: Product[] } = {};
+    for (const p of allProductsList) {
+      if (!grouped[p.category]) grouped[p.category] = [];
+      grouped[p.category].push(p);
+    }
+    sheetCache = grouped;
+    sheetCacheTimestamp = Date.now();
+    console.log(`[Init] Preloaded ${allProductsList.length} products in ${Object.keys(grouped).length} categories from catalog cache.`);
+  }
+} catch (e: any) {
+  console.warn('Failed to preload local catalog cache:', e.message);
+}
 
 function normalizeStock(raw: string | null | undefined): number {
   const s = (raw || '').trim().toLowerCase();
@@ -409,7 +435,7 @@ app.post('/api/contact', (req: Request, res: Response) => {
   });
 });
 
-// 7. API: Force sync / flush cache from Google Sheet
+// 7. API: Force sync / flush cache
 app.all('/api/sync', async (req: Request, res: Response) => {
   try {
     sheetCache = null;
@@ -417,12 +443,49 @@ app.all('/api/sync', async (req: Request, res: Response) => {
     await fetchProductsFromSheet();
     res.json({
       success: true,
-      message: 'Catalog synchronized from Google Sheet successfully.',
+      message: 'Catalog synchronized successfully.',
       totalProducts: allProductsList.length,
     });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error?.message || 'Sync failed' });
   }
+});
+
+// 8. SEO: Standard robots.txt
+app.get('/robots.txt', (req: Request, res: Response) => {
+  const robotsPath = path.join(process.cwd(), 'public', 'robots.txt');
+  if (fs.existsSync(robotsPath)) {
+    res.type('text/plain').sendFile(robotsPath);
+    return;
+  }
+  const host = req.get('host') || 'innoelectronics.com';
+  const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+  const content = `User-agent: *\nAllow: /\nDisallow: /api/\n\nSitemap: ${protocol}://${host}/sitemap.xml\n`;
+  res.type('text/plain').send(content);
+});
+
+// 9. SEO: Standards-compliant XML Sitemap
+app.get('/sitemap.xml', (req: Request, res: Response) => {
+  const sitemapPath = path.join(process.cwd(), 'public', 'sitemap.xml');
+  if (fs.existsSync(sitemapPath)) {
+    res.type('application/xml').sendFile(sitemapPath);
+    return;
+  }
+  const host = req.get('host') || 'innoelectronics.com';
+  const protocol = req.protocol === 'https' || req.get('x-forwarded-proto') === 'https' ? 'https' : 'http';
+  const baseUrl = `${protocol}://${host}`;
+  const today = new Date().toISOString().split('T')[0];
+  let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+  xml += `  <url><loc>${baseUrl}/</loc><lastmod>${today}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>\n`;
+  const categories = sheetCache ? Object.keys(sheetCache) : [];
+  for (const cat of categories) {
+    xml += `  <url><loc>${baseUrl}/?category=${encodeURIComponent(cat)}</loc><lastmod>${today}</lastmod><changefreq>daily</changefreq><priority>0.8</priority></url>\n`;
+  }
+  for (const p of allProductsList) {
+    xml += `  <url><loc>${baseUrl}/product/${encodeURIComponent(p.sku)}</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>\n`;
+  }
+  xml += `</urlset>`;
+  res.type('application/xml').send(xml);
 });
 
 // Start server with Vite middleware in dev or static files in production

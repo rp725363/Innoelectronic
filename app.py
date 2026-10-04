@@ -1,6 +1,6 @@
 """
-Innoelectronics - Production Web Application for PythonAnywhere
-High-Performance Catalog API with SQLite FTS5 Search & Advanced SEO Engine.
+Innoelectronics - Official Online Catalog Web Application
+High-Performance Catalog API with Comprehensive Search & Advanced SEO Engine.
 """
 import os
 import time
@@ -33,9 +33,8 @@ def api_health():
         summary = db.get_catalog_summary()
         return jsonify({
             'status': 'ok',
-            'app': 'Innoelectronics High-Performance Catalog API',
-            'environment': 'PythonAnywhere / WSGI',
-            'database': 'SQLite with FTS5 Full-Text Search',
+            'app': 'Innoelectronics Catalog API',
+            'catalogVersion': '2026.1',
             'cachedProducts': summary['totalProducts'],
             'totalCategories': summary['totalCategories'],
             'timestamp': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())

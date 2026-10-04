@@ -38,22 +38,23 @@ import { ContactModal } from './components/ContactModal';
 import { Footer } from './components/Footer';
 import { Logo } from './components/Logo';
 import { getCategoryFallbackImage, CATEGORY_METADATA } from './data/categoryImages';
+import catalogData from './data/catalog.json';
 
 const CART_STORAGE_KEY = 'inno_cart_items_v1';
 
-const DEFAULT_CATEGORIES: CategorySummary[] = Object.keys(CATEGORY_METADATA).map((name) => ({
-  name,
-  count: CATEGORY_METADATA[name].badge ? parseInt(CATEGORY_METADATA[name].badge!.replace(/\D/g, ''), 10) || 50 : 50,
-  sampleImage: CATEGORY_METADATA[name].image,
+const INITIAL_CATEGORIES: CategorySummary[] = (catalogData.categories || []).map((c: any) => ({
+  name: c.name,
+  count: c.count || 50,
+  sampleImage: getCategoryFallbackImage(c.name, c.sampleImage),
 }));
 
 export default function App() {
   // Navigation View State: 'home' (landing with categories and company info, NO product cards) vs 'catalog' (full products list, filters & cards)
   const [currentView, setCurrentView] = useState<'home' | 'catalog'>('home');
 
-  // State: Catalog & Categories - Pre-populated with defaults so categories are always visible instantly
-  const [categories, setCategories] = useState<CategorySummary[]>(DEFAULT_CATEGORIES);
-  const [totalCatalogCount, setTotalCatalogCount] = useState<number>(3428);
+  // State: Catalog & Categories - Pre-populated with verified catalog data so categories are ALWAYS visible instantly
+  const [categories, setCategories] = useState<CategorySummary[]>(INITIAL_CATEGORIES);
+  const [totalCatalogCount, setTotalCatalogCount] = useState<number>(catalogData.totalProducts || 3428);
   const [loadingCatalog, setLoadingCatalog] = useState(false);
 
   // State: Filter & Query
@@ -115,12 +116,12 @@ export default function App() {
       setLoadingCatalog(true);
       const res = await fetch('/api/catalog');
       const data = await res.json();
-      if (data.success) {
-        setCategories(data.categories || []);
-        setTotalCatalogCount(data.totalProducts || 0);
+      if (data.success && Array.isArray(data.categories) && data.categories.length > 0) {
+        setCategories(data.categories);
+        setTotalCatalogCount(data.totalProducts || INITIAL_CATEGORIES.length);
       }
     } catch (e) {
-      console.error('Failed to load catalog metadata:', e);
+      console.warn('Using baseline catalog categories:', e);
     } finally {
       setLoadingCatalog(false);
     }
@@ -129,6 +130,52 @@ export default function App() {
   useEffect(() => {
     loadCatalog();
   }, [loadCatalog]);
+
+  // URL state synchronization for deep links, categories, and direct product SEO URLs
+  useEffect(() => {
+    const handleUrlState = () => {
+      try {
+        const url = new URL(window.location.href);
+        const categoryParam = url.searchParams.get('category');
+        const searchParam = url.searchParams.get('q') || url.searchParams.get('search');
+        const skuParam = url.searchParams.get('sku') || url.searchParams.get('product');
+        const pathParts = window.location.pathname.split('/').filter(Boolean);
+
+        // Handle /product/:sku
+        let targetSku: string | null = null;
+        if (pathParts[0] === 'product' && pathParts[1]) {
+          targetSku = decodeURIComponent(pathParts[1]);
+        } else if (skuParam) {
+          targetSku = skuParam;
+        }
+
+        if (targetSku) {
+          fetch(`/api/product/${encodeURIComponent(targetSku)}`)
+            .then((r) => r.json())
+            .then((d) => {
+              if (d.success && d.product) {
+                setSelectedProduct(d.product);
+              }
+            })
+            .catch(() => {});
+        }
+
+        if (categoryParam) {
+          setFilters((prev) => ({ ...prev, category: categoryParam, page: 1 }));
+          setCurrentView('catalog');
+        } else if (searchParam) {
+          setFilters((prev) => ({ ...prev, search: searchParam, page: 1 }));
+          setCurrentView('catalog');
+        }
+      } catch (e) {
+        console.warn('URL routing note:', e);
+      }
+    };
+
+    handleUrlState();
+    window.addEventListener('popstate', handleUrlState);
+    return () => window.removeEventListener('popstate', handleUrlState);
+  }, []);
 
   // Fetch filtered products
   const fetchProducts = useCallback(async () => {
@@ -226,6 +273,9 @@ export default function App() {
   const handleGoHome = () => {
     setCurrentView('home');
     handleResetFilters();
+    try {
+      window.history.pushState(null, '', '/');
+    } catch {}
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -238,6 +288,13 @@ export default function App() {
         pins: '',
         page: 1,
       }));
+      try {
+        window.history.pushState(null, '', `/?category=${encodeURIComponent(cat)}`);
+      } catch {}
+    } else {
+      try {
+        window.history.pushState(null, '', '/');
+      } catch {}
     }
     setCurrentView('catalog');
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -252,6 +309,9 @@ export default function App() {
       page: 1,
     }));
     setCurrentView('catalog');
+    try {
+      window.history.pushState(null, '', cat ? `/?category=${encodeURIComponent(cat)}` : '/');
+    } catch {}
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -421,7 +481,7 @@ export default function App() {
                   <span className="text-lg font-bold text-cyan-400">
                     {totalCatalogCount ? totalCatalogCount.toLocaleString() : '3,400+'} Parts
                   </span>
-                  <span className="text-[11px] text-slate-400 block mt-0.5">Live inventory sync</span>
+                  <span className="text-[11px] text-slate-400 block mt-0.5">Verified in-stock catalog</span>
                 </div>
                 <div className="bg-slate-800/50 p-3.5 rounded-xl border border-slate-700/60">
                   <span className="text-slate-400 block">Categories</span>
@@ -443,9 +503,13 @@ export default function App() {
           </section>
 
           {/* Explore by Category Grid */}
-          <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+          <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10" id="explore-categories">
             <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 gap-3">
               <div>
+                <div className="flex items-center space-x-2 text-cyan-700 text-xs font-bold uppercase tracking-wider mb-1">
+                  <span className="w-2 h-2 rounded-full bg-cyan-600 animate-pulse"></span>
+                  <span>Component Catalog Categories</span>
+                </div>
                 <h2 className="text-xl sm:text-2xl font-bold text-slate-900">Explore by Category</h2>
                 <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
                   Select a product line to browse available components and technical datasheets
@@ -455,7 +519,7 @@ export default function App() {
                 onClick={() => handleNavigateToCatalog()}
                 className="inline-flex items-center text-xs sm:text-sm font-semibold text-cyan-700 hover:text-cyan-800 space-x-1"
               >
-                <span>View Full Catalog</span>
+                <span>View Full Catalog ({totalCatalogCount} Parts)</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>
@@ -468,7 +532,7 @@ export default function App() {
                   <button
                     key={cat.name}
                     onClick={() => handleSelectCategory(cat.name)}
-                    className="bg-white rounded-xl border border-slate-200 hover:border-cyan-500 hover:shadow-lg transition-all text-left flex flex-col justify-between group overflow-hidden"
+                    className="bg-white rounded-xl border border-slate-200 hover:border-cyan-500 hover:shadow-lg transition-all text-left flex flex-col justify-between group overflow-hidden cursor-pointer"
                   >
                     {/* Categorical Product Image Container */}
                     <div className="relative w-full h-32 bg-slate-50 border-b border-slate-100 flex items-center justify-center p-3 overflow-hidden group-hover:bg-cyan-50/20 transition-colors">
@@ -477,6 +541,9 @@ export default function App() {
                         alt={`Innoelectronics ${cat.name} categorical product`}
                         loading="lazy"
                         referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).src = 'https://res.cloudinary.com/dks3wmj5e/image/upload/v1744911281/Molex_KK_2.54mm_Connector_16-Pin_a49ilf.webp';
+                        }}
                         className="max-h-full max-w-full object-contain transition-transform duration-300 group-hover:scale-110 drop-shadow-xs"
                       />
                       <span className="absolute top-2 right-2 bg-slate-900/80 backdrop-blur-xs text-[10px] text-white font-semibold px-2 py-0.5 rounded-full shadow-xs">

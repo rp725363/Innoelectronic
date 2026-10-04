@@ -135,7 +135,7 @@
         href="/?category={{ cat.name|urlencode }}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}"
         class="bg-slate-50 hover:bg-white rounded-xl border {% if selected_category == cat.name %}border-blue-600 ring-2 ring-blue-500/20 bg-blue-50/50 shadow-sm{% else %}border-slate-200 hover:border-blue-500 hover:shadow-md{% endif %} transition duration-200 p-3 flex flex-col justify-between group overflow-hidden text-left"
       >
-        <div class="aspect-4/3 bg-white rounded-lg p-2.5 mb-2.5 flex items-center justify-center overflow-hidden border border-slate-100 group-hover:border-blue-100 transition">
+        <div class="h-28 w-full bg-white rounded-lg p-2.5 mb-2.5 flex items-center justify-center overflow-hidden border border-slate-100 group-hover:border-blue-100 transition">
           {% if cat.sampleImage and cat.sampleImage != 'x' and cat.sampleImage != 'None' %}
           <img
             src="{{ cat.sampleImage }}"
@@ -230,7 +230,7 @@
     <div class="bg-white rounded-2xl border border-slate-200/90 hover:border-blue-400 shadow-2xs hover:shadow-md transition duration-200 flex flex-col overflow-hidden group">
       
       <!-- Card Image Area -->
-      <a href="/product/{{ item.sku }}" class="relative aspect-4/3 bg-slate-50 p-4 flex items-center justify-center overflow-hidden border-b border-slate-100 group-hover:bg-slate-100/60 transition">
+      <a href="/product/{{ item.sku }}" class="relative h-44 w-full bg-slate-50 p-4 flex items-center justify-center overflow-hidden border-b border-slate-100 group-hover:bg-slate-100/60 transition">
         {% if item.image and item.image != 'None' %}
         <img
           src="{{ item.image }}"

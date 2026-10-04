@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cpu, Mail, Phone, MessageSquare, ShieldCheck, FileText, ExternalLink, Heart } from 'lucide-react';
+import { Cpu, Mail, Phone, MessageSquare, ShieldCheck, FileText, ExternalLink, Heart, Package } from 'lucide-react';
 import { CategorySummary } from '../types';
 import { Logo } from './Logo';
 
@@ -63,12 +63,12 @@ export const Footer: React.FC<FooterProps> = ({
 
           <div className="flex items-start space-x-3">
             <div className="p-2.5 rounded-lg bg-slate-800 text-purple-400 shrink-0">
-              <Cpu className="w-5 h-5" />
+              <Package className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="font-bold text-white text-sm">Live Inventory Sheet</h4>
+              <h4 className="font-bold text-white text-sm">Ready-to-Ship Inventory</h4>
               <p className="text-slate-400 mt-1 text-xs">
-                Real-time synchronization with 3,400+ SKUs across connectors, MCUs, and tools.
+                Comprehensive stock with 3,400+ SKUs across connectors, MCUs, passives, and tools.
               </p>
             </div>
           </div>
