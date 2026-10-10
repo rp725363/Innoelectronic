@@ -50,6 +50,10 @@ directories_to_include = [
     'public'
 ]
 
+# Include compiled React production bundle if built
+if os.path.exists(os.path.join(PROJECT_DIR, 'dist')):
+    directories_to_include.append('dist')
+
 if os.path.exists(ZIP_PATH):
     os.remove(ZIP_PATH)
 

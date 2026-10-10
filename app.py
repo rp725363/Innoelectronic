@@ -278,11 +278,11 @@ def sitemap_xml():
 @app.route('/')
 def home():
     """
-    Renders the homepage. Renders the server-side template with full catalog,
-    categories, and search. If 'spa=true' is explicitly requested, serves the React build.
+    Renders the homepage. If compiled React SPA exists in dist, serves it directly.
+    Otherwise renders server-side template with full catalog, categories, and search.
     """
     dist_index = os.path.join(DIST_DIR, 'index.html')
-    if request.args.get('spa') and os.path.exists(dist_index):
+    if os.path.exists(dist_index):
         return send_from_directory(DIST_DIR, 'index.html')
 
     category = request.args.get('category', '').strip() or None
@@ -323,6 +323,15 @@ def home():
     )
 
 
+@app.route('/home')
+@app.route('/catalog')
+def spa_routes():
+    dist_index = os.path.join(DIST_DIR, 'index.html')
+    if os.path.exists(dist_index):
+        return send_from_directory(DIST_DIR, 'index.html')
+    return home()
+
+
 @app.route('/product/<sku>')
 def product_detail_page(sku):
     """
@@ -330,7 +339,7 @@ def product_detail_page(sku):
     and direct WhatsApp inquiry link.
     """
     dist_index = os.path.join(DIST_DIR, 'index.html')
-    if request.args.get('spa') and os.path.exists(dist_index):
+    if os.path.exists(dist_index):
         return send_from_directory(DIST_DIR, 'index.html')
 
     product, related = db.get_product_by_sku(sku)

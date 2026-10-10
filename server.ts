@@ -8,9 +8,20 @@ import { createServer as createViteServer } from 'vite';
 const currentFilename = typeof __filename !== 'undefined' ? __filename : (import.meta.url ? fileURLToPath(import.meta.url) : process.cwd());
 const currentDirname = typeof __dirname !== 'undefined' ? __dirname : path.dirname(currentFilename);
 
-const app = express();
-const PORT = Number(process.env.PORT) || 3000;
+function resolvePort(): number {
+  const args = process.argv;
+  const portIdx = args.indexOf('--port');
+  if (portIdx !== -1 && args[portIdx + 1]) {
+    const parsed = Number(args[portIdx + 1]);
+    if (!isNaN(parsed)) return parsed;
+  }
+  if (process.env.APP_PORT) return Number(process.env.APP_PORT);
+  if (process.env.DEFAULT_APP_PORT) return Number(process.env.DEFAULT_APP_PORT);
+  return Number(process.env.PORT) || 3000;
+}
+const PORT = resolvePort();
 
+const app = express();
 app.use(express.json());
 
 interface Product {
@@ -487,6 +498,17 @@ app.all('/api/sync', async (req: Request, res: Response) => {
   } catch (error: any) {
     res.status(500).json({ success: false, error: error?.message || 'Sync failed' });
   }
+});
+
+// 7.1 Google Search Console Verification File
+app.get('/google04f7938352655765.html', (req: Request, res: Response) => {
+  const publicDir = resolvePublicPath();
+  const verifyPath = path.join(publicDir, 'google04f7938352655765.html');
+  if (fs.existsSync(verifyPath)) {
+    res.type('text/html').sendFile(verifyPath);
+    return;
+  }
+  res.type('text/html').send('google-site-verification: google04f7938352655765.html\n');
 });
 
 // 8. SEO: Standard robots.txt
