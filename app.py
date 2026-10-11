@@ -275,6 +275,12 @@ def sitemap_xml():
     return Response('\n'.join(xml_lines), mimetype='application/xml')
 
 
+@app.route('/google04f7938352655765.html')
+def google_verification_file():
+    """Serve Google Search Console verification HTML file."""
+    return send_from_directory(PUBLIC_DIR, 'google04f7938352655765.html')
+
+
 @app.route('/')
 def home():
     """
@@ -289,6 +295,9 @@ def home():
     query = request.args.get('q', '').strip() or None
     sort = request.args.get('sort', '').strip() or None
     in_stock = request.args.get('inStock', '').lower() == 'true'
+    view = request.args.get('view', '').strip()
+    if request.path == '/catalog':
+        view = 'catalog'
 
     try:
         page = max(1, int(request.args.get('page', 1)))
@@ -296,6 +305,10 @@ def home():
         page = 1
 
     limit = 24
+
+    # The homepage strictly shows the categories showcase, metrics, and value propositions.
+    # Components are shown per category when category is selected, searched, or on catalog view.
+    is_homepage = (not category and not query and view != 'catalog')
 
     summary = db.get_catalog_summary()
     result = db.query_products(
@@ -319,7 +332,9 @@ def home():
         selected_category=category or '',
         search_query=query or '',
         in_stock_only=in_stock,
-        sort_order=sort or ''
+        sort_order=sort or '',
+        is_homepage=is_homepage,
+        view=view
     )
 
 

@@ -168,6 +168,77 @@
     </div>
   </section>
 
+  {% if is_homepage %}
+  <!-- Why Engineers & Buyers Choose Innoelectronics (Homepage View) -->
+  <section class="mt-4 bg-white rounded-2xl p-6 sm:p-8 border border-slate-200/90 shadow-xs mb-8">
+    <div class="text-center max-w-2xl mx-auto mb-8">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold mb-3">
+        <span>🛡️ Enterprise Quality Standard</span>
+      </div>
+      <h2 class="text-xl sm:text-2xl font-bold text-slate-900">
+        Why Engineers &amp; Buyers Choose Innoelectronics
+      </h2>
+      <p class="text-xs sm:text-sm text-slate-500 mt-1">
+        Direct supply chain designed for prototype developers, hardware startups, and volume electronics manufacturers.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div class="p-5 rounded-xl bg-slate-50 border border-slate-200/80">
+        <div class="w-10 h-10 rounded-lg bg-blue-100 text-blue-800 flex items-center justify-center mb-3">
+          <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+        </div>
+        <h3 class="font-bold text-sm text-slate-900 mb-1">100% Genuine Components</h3>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Direct OEM sourcing with zero counterfeit tolerance. All connector contacts and plastics match original specs.
+        </p>
+      </div>
+
+      <div class="p-5 rounded-xl bg-slate-50 border border-slate-200/80">
+        <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center mb-3">
+          <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
+        <h3 class="font-bold text-sm text-slate-900 mb-1">Technical Datasheets</h3>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Direct access to official PDF specifications, mating connector pinouts, current ratings, and pitch diagrams.
+        </p>
+      </div>
+
+      <div class="p-5 rounded-xl bg-slate-50 border border-slate-200/80">
+        <div class="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-800 flex items-center justify-center mb-3">
+          <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+        <h3 class="font-bold text-sm text-slate-900 mb-1">Pan-India Express Dispatch</h3>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Fast order processing directly from our inventory hub with reliable courier tracking to all Indian pincodes.
+        </p>
+      </div>
+
+      <div class="p-5 rounded-xl bg-slate-50 border border-slate-200/80">
+        <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center mb-3">
+          <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/></svg>
+        </div>
+        <h3 class="font-bold text-sm text-slate-900 mb-1">Instant WhatsApp RFQ</h3>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Submit parts list or BOM inquiries directly on WhatsApp (+91 94284 47698) for immediate pricing.
+        </p>
+      </div>
+    </div>
+
+    <!-- Browse Full Catalog CTA -->
+    <div class="mt-8 pt-6 border-t border-slate-100 text-center">
+      <a
+        href="/catalog"
+        class="inline-flex items-center gap-2 px-8 py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs transition text-sm"
+      >
+        <span>Browse All {{ total_count }} Components in Full Catalog</span>
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+      </a>
+      <p class="text-xs text-slate-400 mt-2">Select any category card above to view products strictly by category, or search directly.</p>
+    </div>
+  </section>
+  {% else %}
+
   <!-- Active Category Filter Banner (if selected) -->
   {% if selected_category %}
   <div class="bg-blue-50 border border-blue-200 rounded-xl p-3.5 mb-6 flex flex-wrap items-center justify-between gap-3 text-xs">
@@ -185,7 +256,7 @@
 
   <!-- Category Quick Filter Pills -->
   <div class="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none text-xs">
-    <a href="/" class="px-3.5 py-1.5 rounded-full font-semibold shrink-0 transition {% if not selected_category %}bg-blue-600 text-white shadow-xs{% else %}bg-white border border-slate-200 text-slate-700 hover:bg-slate-100{% endif %}">
+    <a href="/catalog{% if search_query %}?q={{ search_query|urlencode }}{% endif %}" class="px-3.5 py-1.5 rounded-full font-semibold shrink-0 transition {% if not selected_category %}bg-blue-600 text-white shadow-xs{% else %}bg-white border border-slate-200 text-slate-700 hover:bg-slate-100{% endif %}">
       All Components ({{ total_count }})
     </a>
     {% for cat in categories %}
@@ -204,7 +275,7 @@
     </div>
 
     {% if search_query or selected_category or in_stock_only %}
-    <a href="/" class="text-blue-600 hover:underline font-semibold flex items-center gap-1">
+    <a href="/{% if is_homepage %}{% else %}catalog{% endif %}" class="text-blue-600 hover:underline font-semibold flex items-center gap-1">
       <span>Reset Filters</span> &times;
     </a>
     {% endif %}
@@ -218,7 +289,7 @@
     </div>
     <h3 class="text-base font-bold text-slate-900 mb-1">No components matched</h3>
     <p class="text-xs text-slate-500 mb-6">Try searching with a partial part number or browse across all categories.</p>
-    <a href="/" class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition">
+    <a href="/catalog" class="inline-flex items-center justify-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition">
       View All Inventory
     </a>
   </div>
@@ -406,7 +477,7 @@
   <div class="mt-10 flex items-center justify-center gap-2 text-xs">
     {% if page > 1 %}
     <a
-      href="/?page={{ page - 1 }}{% if selected_category %}&category={{ selected_category|urlencode }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if in_stock_only %}&inStock=true{% endif %}{% if sort_order %}&sort={{ sort_order }}{% endif %}"
+      href="/?page={{ page - 1 }}{% if selected_category %}&category={{ selected_category|urlencode }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if in_stock_only %}&inStock=true{% endif %}{% if sort_order %}&sort={{ sort_order }}{% endif %}{% if view %}&view={{ view }}{% endif %}"
       class="px-3.5 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition"
     >
       &larr; Previous
@@ -419,7 +490,7 @@
 
     {% if page < total_pages %}
     <a
-      href="/?page={{ page + 1 }}{% if selected_category %}&category={{ selected_category|urlencode }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if in_stock_only %}&inStock=true{% endif %}{% if sort_order %}&sort={{ sort_order }}{% endif %}"
+      href="/?page={{ page + 1 }}{% if selected_category %}&category={{ selected_category|urlencode }}{% endif %}{% if search_query %}&q={{ search_query|urlencode }}{% endif %}{% if in_stock_only %}&inStock=true{% endif %}{% if sort_order %}&sort={{ sort_order }}{% endif %}{% if view %}&view={{ view }}{% endif %}"
       class="px-3.5 py-2 rounded-lg bg-white border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition"
     >
       Next &rarr;
@@ -428,6 +499,7 @@
   </div>
   {% endif %}
 
+  {% endif %}
   {% endif %}
 </div>
 {% endblock %}

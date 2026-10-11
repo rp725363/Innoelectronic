@@ -97,16 +97,62 @@ In the **Web** tab, scroll down to the **Static files** section and add:
 
 ## 🔧 Troubleshooting & Solutions for Common PythonAnywhere Issues
 
-If you see **"Something went wrong :-("**:
+### ⚠️ "I deployed / committed latest code but still see old code output"
+
+If you deployed, committed, or updated code on PythonAnywhere but do not see the latest output, check these **4 quick reasons**:
+
+1. **You must click the Reload button on the Web tab (Crucial!):**
+   PythonAnywhere keeps worker processes running in memory. Any code changes, `git pull`, or file edits **do NOT take effect until you reload**:
+   - Go to your PythonAnywhere **Web** tab.
+   - Click the green **"Reload yourusername.pythonanywhere.com"** button at the top.
+   - *(Or in a Bash console, run: `touch /var/www/yourusername_pythonanywhere_com_wsgi.py`)*
+
+2. **Did you run `git pull` in the PythonAnywhere console?**
+   Committing to GitHub or pushing from your computer does **not** automatically update PythonAnywhere.
+   - Open a **Bash console** on PythonAnywhere:
+     ```bash
+     cd ~/innoelectronics
+     git pull origin main
+     ```
+   - Then click **Reload** in the Web tab.
+
+3. **Browser Caching:**
+   Your browser may be caching the old HTML, JavaScript, or CSS stylesheets:
+   - Perform a hard refresh: **`Ctrl + F5`** (Windows/Linux) or **`Cmd + Shift + R`** (Mac).
+   - Or open the website in an **Incognito / Private Window**.
+
+4. **Category Display Update:**
+   - On the homepage (`/`), the component product grid is hidden so visitors browse by category first.
+   - Components are displayed when you click any category card (e.g. `/?category=Molex+Connectors`), use the search bar, or visit `/catalog`.
+
+---
+
+### 📦 Dependency Verification for PythonAnywhere
+
+**Are all dependencies supported on PythonAnywhere? YES, 100%.**
+Here is the complete dependency breakdown:
+
+| Dependency | Purpose | PythonAnywhere Support Status |
+|---|---|---|
+| **`Flask`** (>=2.2.0) | Web framework & routes | **Pre-installed** by default on PythonAnywhere across Python 3.8, 3.9, 3.10, 3.11. |
+| **`requests`** (>=2.28.0) | Google Sheet inventory sync | **Pre-installed** by default on PythonAnywhere. |
+| **`sqlite3`** | 3,428+ item database & FTS5 search | **Built-in** to Python's standard library. Zero external packages needed. |
+| **`urllib`, `os`, `json`, `csv`, `time`** | Utilities & proxy handler | **Built-in** Python standard library modules. |
+
+There are **zero problematic, unmaintained, or OS-dependent packages** (no C-compilers, no Puppeteer, no Chrome dependencies, no heavy Node runtime required). It runs entirely on standard Python 3.10.
+
+If you ever see **"Something went wrong :-("**:
 Check your error log in the **Web** tab under **Log files** -> `yourusername.pythonanywhere.com.error.log`.
 
 | Common Challenge | Cause | Verified Fix |
 |---|---|---|
+| Changes not showing after git commit | Web worker has not restarted | Click the green **Reload** button in the Web tab. |
+| Old files present | Code was not pulled | Run `git pull origin main` in PythonAnywhere Bash console. |
 | `ModuleNotFoundError: No module named 'flask'` | Flask installed into a different Python version | Run `pip3.10 install --user -r requirements.txt` in the console (match your web app's Python version). |
-| `sqlite3.OperationalError: disk I/O error` | SQLite WAL mode on PythonAnywhere NFS network drive | **Resolved in this update:** Database and connections now use NFS-compliant `DELETE` journal mode and 10s busy timeout. |
-| `504 Gateway Time-out` on reload | Background sync thread hanging or waiting on network | **Resolved in this update:** Startup does not spawn background threads if `catalog.db` is already loaded with 3,428 items. Startup is now sub-millisecond. |
-| Google Sheet sync fails on Free Tier | PythonAnywhere free accounts block outbound requests unless routed through proxy | **Resolved in this update:** `db.py` automatically detects PythonAnywhere and routes through `http://proxy.server:3128`. |
-| Templates or static files not found | Current working directory is not the project root | **Resolved in this update:** `wsgi.py` and WSGI snippet include `os.chdir(project_home)`. |
+| `sqlite3.OperationalError: disk I/O error` | SQLite WAL mode on PythonAnywhere NFS network drive | **Resolved:** Database and connections use NFS-compliant `DELETE` journal mode and 10s busy timeout. |
+| `504 Gateway Time-out` on reload | Background sync thread hanging or waiting on network | **Resolved:** Startup does not spawn background threads if `catalog.db` is already loaded with 3,428 items. Startup is now sub-millisecond. |
+| Google Sheet sync fails on Free Tier | PythonAnywhere free accounts block outbound requests unless routed through proxy | **Resolved:** `db.py` automatically detects PythonAnywhere and routes through `http://proxy.server:3128`. |
+| Templates or static files not found | Current working directory is not the project root | **Resolved:** `wsgi.py` and WSGI snippet include `os.chdir(project_home)`. |
 
 ---
 
