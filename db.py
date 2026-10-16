@@ -16,7 +16,7 @@ DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'catalog.db')
 SHEET_ID = '12CYpadbOJkj4HUCDTTHflMPHH2sWCqJ8-6x8X8pZbUs'
 SHEET_NAME = 'Products'
 GOOGLE_SHEET_URL = f'https://docs.google.com/spreadsheets/d/{SHEET_ID}/gviz/tq?tqx=out:csv&sheet={SHEET_NAME}'
-CACHE_TTL_SECONDS = 3600  # Background refresh every 1 hour
+CACHE_TTL_SECONDS = 300  # Auto-refresh check every 5 minutes
 
 _sync_lock = threading.Lock()
 _is_syncing = False
@@ -28,7 +28,9 @@ def get_urllib_opener():
         'PYTHONANYWHERE_DOMAIN' in os.environ or
         'PYTHONANYWHERE_SITE' in os.environ or
         os.path.exists('/var/log/pythonanywhere') or
-        'pythonanywhere' in os.environ.get('HOSTNAME', '').lower()
+        'pythonanywhere' in os.environ.get('HOSTNAME', '').lower() or
+        'http_proxy' in os.environ or
+        'https_proxy' in os.environ
     )
     if is_pa:
         proxy_handler = urllib.request.ProxyHandler({
@@ -37,6 +39,80 @@ def get_urllib_opener():
         })
         return urllib.request.build_opener(proxy_handler)
     return urllib.request.build_opener()
+
+
+def fetch_sheet_csv():
+    """
+    Fetches the CSV with automatic proxy detection and fallback.
+    Supports PythonAnywhere free tier proxy http://proxy.server:3128.
+    """
+    urls = [
+        GOOGLE_SHEET_URL,
+        f'https://docs.google.com/spreadsheets/d/{SHEET_ID}/export?format=csv'
+    ]
+    last_err = None
+    for url in urls:
+        req = urllib.request.Request(
+            url,
+            headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) InnoelectronicsCatalogSync/2.0'}
+        )
+        # 1. Try standard opener
+        try:
+            opener = get_urllib_opener()
+            with opener.open(req, timeout=20) as resp:
+                data = resp.read().decode('utf-8', errors='replace')
+                if len(data.strip()) > 100:
+                    return data
+        except Exception as e:
+            last_err = e
+
+        # 2. Try explicit PythonAnywhere proxy
+        try:
+            proxy_handler = urllib.request.ProxyHandler({
+                'http': 'http://proxy.server:3128',
+                'https': 'http://proxy.server:3128'
+            })
+            proxy_opener = urllib.request.build_opener(proxy_handler)
+            with proxy_opener.open(req, timeout=20) as resp:
+                data = resp.read().decode('utf-8', errors='replace')
+                if len(data.strip()) > 100:
+                    return data
+        except Exception as e:
+            last_err = e
+
+    raise RuntimeError(f"Failed to fetch Google Sheet CSV from any source. Error: {last_err}")
+
+
+def check_and_trigger_background_sync(max_age_seconds=300):
+    """
+    Checks if catalog data in SQLite is older than max_age_seconds.
+    If older, launches a background thread to fetch latest changes from Google Sheets.
+    Non-blocking: returns immediately so web requests are never slowed down.
+    """
+    global _is_syncing
+    if _is_syncing:
+        return False
+
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT value FROM sync_meta WHERE key = 'last_sync_timestamp';")
+        row = cursor.fetchone()
+        conn.close()
+
+        last_sync = float(row['value']) if row else 0
+        if (time.time() - last_sync) > max_age_seconds:
+            def worker():
+                try:
+                    sync_products_from_sheet(force=True)
+                except Exception as e:
+                    print(f"[Auto-sync worker error]: {e}")
+            t = threading.Thread(target=worker, daemon=True)
+            t.start()
+            return True
+    except Exception as e:
+        print(f"[Check sync error]: {e}")
+    return False
 
 
 def get_db_connection():
@@ -193,14 +269,8 @@ def sync_products_from_sheet(force=False):
                         conn.close()
                         return {'status': 'cached', 'total_products': total}
 
-            print("[Sync] Fetching Google Sheet CSV...")
-            req = urllib.request.Request(
-                GOOGLE_SHEET_URL,
-                headers={'User-Agent': 'Mozilla/5.0 InnoelectronicsCatalogSync/2.0'}
-            )
-            opener = get_urllib_opener()
-            with opener.open(req, timeout=20) as resp:
-                content = resp.read().decode('utf-8', errors='replace')
+            print("[Sync] Fetching Google Sheet CSV via robust fetcher...")
+            content = fetch_sheet_csv()
 
             reader = list(csv.reader(io.StringIO(content)))
             if len(reader) < 2:
@@ -284,13 +354,20 @@ def sync_products_from_sheet(force=False):
                 conn.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES ('last_sync_timestamp', ?);", (str(now_ts),))
                 conn.execute("INSERT OR REPLACE INTO sync_meta (key, value) VALUES ('total_products', ?);", (str(len(rows_to_insert)),))
 
-            print(f"[Sync Success] Indexed {len(rows_to_insert)} products into SQLite.")
+            categories_count = len(set(r[2] for r in rows_to_insert))
+            print(f"[Sync Success] Indexed {len(rows_to_insert)} products ({categories_count} categories) into SQLite.")
             conn.close()
-            return {'status': 'success', 'total_products': len(rows_to_insert)}
+            return {
+                'status': 'success',
+                'total_products': len(rows_to_insert),
+                'categories_count': categories_count,
+                'timestamp': now_ts,
+                'sheet_id': SHEET_ID
+            }
 
         except Exception as e:
             print(f"[Sync Error] Failed to sync from sheet: {e}")
-            return {'status': 'error', 'message': str(e)}
+            return {'status': 'error', 'message': str(e), 'sheet_id': SHEET_ID}
         finally:
             _is_syncing = False
 
@@ -351,6 +428,7 @@ CATEGORY_FALLBACK_IMAGES = {
 
 def get_catalog_summary():
     """Returns total count, categories list with product count and sample image."""
+    check_and_trigger_background_sync(300)
     conn = get_db_connection()
     cursor = conn.cursor()
 
@@ -389,6 +467,7 @@ def query_products(category=None, query=None, brand=None, pins=None, type_filter
     Fast, scalable query with SQLite indexing and pagination.
     Handles 100,000+ items with sub-millisecond execution.
     """
+    check_and_trigger_background_sync(300)
     conn = get_db_connection()
     cursor = conn.cursor()
 

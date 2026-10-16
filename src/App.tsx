@@ -241,6 +241,33 @@ export default function App() {
     fetchProducts();
   }, [fetchProducts]);
 
+  // Synchronize catalog on demand from Google Sheet
+  const [isSyncing, setIsSyncing] = useState(false);
+  const handleSyncCatalog = useCallback(async () => {
+    if (isSyncing) return;
+    setIsSyncing(true);
+    showToast('Connecting to Google Sheet...');
+    try {
+      const res = await fetch('/api/sync?token=inno2026', { 
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`Google Sheet synced! ${data.totalProducts || 'Catalog'} products up to date.`);
+        await loadCatalog();
+        await fetchProducts();
+      } else {
+        showToast(data.message || data.error || 'Synced with sheet response.');
+        await loadCatalog();
+        await fetchProducts();
+      }
+    } catch (err: any) {
+      showToast(`Sync error: ${err?.message || 'Check network connection'}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [isSyncing, showToast, loadCatalog, fetchProducts]);
+
   // Cart operations
   const handleAddToCart = (product: Product, quantity = 1) => {
     setCart((prev) => {
@@ -380,6 +407,8 @@ export default function App() {
         onHomeClick={handleGoHome}
         currentView={currentView}
         onNavigateToCatalog={() => handleNavigateToCatalog()}
+        onSyncCatalog={handleSyncCatalog}
+        isSyncing={isSyncing}
       />
 
       {/* HOMEPAGE VIEW (NO PRODUCT CARDS) */}
@@ -1082,6 +1111,8 @@ export default function App() {
         onOpenContact={() => setIsContactOpen(true)}
         onGoHome={handleGoHome}
         onNavigateToCatalog={() => handleNavigateToCatalog()}
+        onSyncCatalog={handleSyncCatalog}
+        isSyncing={isSyncing}
       />
 
       {/* Product Detail Modal */}

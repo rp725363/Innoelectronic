@@ -14,11 +14,9 @@ print("[1/3] Ensuring SQLite database is up-to-date and configured for PythonAny
 import sqlite3
 import db
 db.init_db()
+print("Syncing latest products from Google Sheets into catalog.db...")
+db.sync_products_from_sheet(force=True)
 summary = db.get_catalog_summary()
-if summary['totalProducts'] == 0:
-    print("Syncing products into catalog.db...")
-    db.sync_products_from_sheet(force=True)
-    summary = db.get_catalog_summary()
 
 # Enforce DELETE journal mode and clean vacuum so it works on PythonAnywhere NFS
 conn = sqlite3.connect(os.path.join(PROJECT_DIR, 'catalog.db'))
@@ -38,6 +36,7 @@ print("[2/3] Packaging files into deployment zip...")
 files_to_include = [
     'app.py',
     'db.py',
+    'sync_catalog.py',
     'wsgi.py',
     'catalog.db',
     'requirements.txt',

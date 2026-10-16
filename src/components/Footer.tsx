@@ -1,5 +1,5 @@
 import React from 'react';
-import { Cpu, Mail, Phone, MessageSquare, ShieldCheck, FileText, ExternalLink, Heart, Package } from 'lucide-react';
+import { Cpu, Mail, Phone, MessageSquare, ShieldCheck, FileText, ExternalLink, Heart, Package, RefreshCw } from 'lucide-react';
 import { CategorySummary } from '../types';
 import { Logo } from './Logo';
 
@@ -10,6 +10,8 @@ interface FooterProps {
   onOpenContact: () => void;
   onGoHome?: () => void;
   onNavigateToCatalog?: () => void;
+  onSyncCatalog?: () => void;
+  isSyncing?: boolean;
 }
 
 export const Footer: React.FC<FooterProps> = ({
@@ -19,6 +21,8 @@ export const Footer: React.FC<FooterProps> = ({
   onOpenContact,
   onGoHome,
   onNavigateToCatalog,
+  onSyncCatalog,
+  isSyncing = false,
 }) => {
   return (
     <footer className="bg-slate-900 text-slate-300 border-t border-slate-800 text-xs">
@@ -189,6 +193,19 @@ export const Footer: React.FC<FooterProps> = ({
                   <ExternalLink className="w-3 h-3 ml-1" />
                 </a>
               </li>
+              {onSyncCatalog && (
+                <li>
+                  <button
+                    type="button"
+                    onClick={onSyncCatalog}
+                    disabled={isSyncing}
+                    className="inline-flex items-center text-slate-300 hover:text-cyan-400 transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    <RefreshCw className={`w-3 h-3 mr-1.5 ${isSyncing ? 'animate-spin text-cyan-400' : 'text-slate-400'}`} />
+                    <span>{isSyncing ? 'Syncing with Google Sheet...' : 'Sync Catalog (Google Sheet)'}</span>
+                  </button>
+                </li>
+              )}
               <li className="text-slate-400 pt-2">
                 Order processing hours:<br />
                 Mon - Sat: 9:30 AM - 7:00 PM IST
@@ -200,9 +217,23 @@ export const Footer: React.FC<FooterProps> = ({
         {/* Bottom copyright */}
         <div className="mt-8 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-3 text-slate-500 text-[11px]">
           <p>&copy; {new Date().getFullYear()} Innoelectronics. All rights reserved.</p>
-          <p className="flex items-center space-x-1">
+          <div className="flex items-center space-x-3">
             <span>Serving electronics engineers, makers, and industries across India</span>
-          </p>
+            {onSyncCatalog && (
+              <>
+                <span>&bull;</span>
+                <button
+                  type="button"
+                  onClick={onSyncCatalog}
+                  disabled={isSyncing}
+                  className="hover:text-cyan-400 transition-colors cursor-pointer inline-flex items-center"
+                >
+                  <RefreshCw className={`w-2.5 h-2.5 mr-1 ${isSyncing ? 'animate-spin' : ''}`} />
+                  {isSyncing ? 'Syncing...' : 'Sync Sheet'}
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
     </footer>

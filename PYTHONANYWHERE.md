@@ -156,19 +156,69 @@ Check your error log in the **Web** tab under **Log files** -> `yourusername.pyt
 
 ---
 
-## 🔄 How to Update Your Inventory
+## 🔄 How to Synchronize Your Inventory (Google Sheets)
 
-Your inventory is stored in `catalog.db` (SQLite) and syncs from your Google Sheet.
+Your inventory is stored in `catalog.db` (SQLite) and pulls from your Google Sheet.
 
-1. **Automatic Background Sync**: The server periodically checks for updates to your Google Sheet without interrupting site visitors.
-2. **Instant Manual Sync**: Whenever you make bulk edits to your Google Sheet, trigger an instant refresh by visiting:
+We provide **4 simple ways** to keep your inventory 100% in sync:
+
+### Method 1: Click the "Sync Sheet" Button on Your Website (Easiest!)
+- Open your website: `https://yourusername.pythonanywhere.com`
+- Click the **"Sync Sheet"** button in the top navigation bar or the footer link **"Sync Catalog (Google Sheet)"**.
+- It will instantly refresh your SQLite catalog and show a toast notification with the updated product count.
+
+### Method 2: Instant Auto-Sync via Google Apps Script (Automated!)
+Set up your Google Sheet so that **whenever you edit any price, stock, or product**, it automatically alerts your website:
+1. In your Google Sheet, click **Extensions** -> **Apps Script**.
+2. Replace any sample code with:
+   ```javascript
+   function onEdit(e) {
+     var url = "https://yourusername.pythonanywhere.com/api/sync?token=inno2026";
+     try {
+       UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+     } catch (err) {
+       Logger.log("Sync error: " + err);
+     }
+   }
    ```
-   https://yourusername.pythonanywhere.com/api/sync?token=inno2026
-   ```
-   Or via curl in your console:
+   *(Replace `yourusername` with your PythonAnywhere username, e.g. `rp725363`)*
+3. Click **Save** (floppy disk icon).
+Now, every time you edit a cell in Google Sheets, your live website updates within seconds!
+
+### Method 3: Command Line in PythonAnywhere Console
+In your PythonAnywhere Bash console, simply run:
+```bash
+python3 sync_catalog.py
+```
+This prints the exact number of synchronized products and categories in 1 second.
+
+### Method 4: Scheduled Daily/Hourly Task (Cron)
+In your PythonAnywhere dashboard:
+1. Go to the **Tasks** tab.
+2. In the command box, enter:
    ```bash
-   curl -X POST "https://yourusername.pythonanywhere.com/api/sync?token=inno2026"
+   python3 /home/yourusername/innoelectronics/sync_catalog.py
    ```
+   *(Or: `curl -s "https://yourusername.pythonanywhere.com/api/sync?token=inno2026"`)*
+3. Set it to run Daily or Hourly.
+
+---
+
+### Method 5: Direct Webhook / Browser URL
+You can trigger a manual sync anytime by opening this URL in any web browser or sending a webhook:
+```
+https://yourusername.pythonanywhere.com/api/sync?token=inno2026
+```
+Response:
+```json
+{
+  "success": true,
+  "status": "success",
+  "totalProducts": 3429,
+  "totalCategories": 19,
+  "message": "Synced 3429 products across 19 categories from Google Sheets."
+}
+```
 
 ---
 

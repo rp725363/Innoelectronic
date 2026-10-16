@@ -193,22 +193,43 @@ def api_contact():
     })
 
 
-@app.route('/api/sync', methods=['GET', 'POST'])
+@app.route('/api/sync', methods=['GET', 'POST', 'OPTIONS'])
 def api_sync():
     """
-    Manual or webhook trigger to update the SQLite catalog from Google Sheets.
-    Usage: GET or POST /api/sync?token=inno2026
+    Manual, UI, or webhook trigger to update the SQLite catalog from Google Sheets.
+    Usage: GET or POST /api/sync (token optional, defaults to inno2026 if protected)
     """
-    token = request.args.get('token', '')
-    # Allow local trigger or matched token
+    if request.method == 'OPTIONS':
+        resp = Response(status=204)
+        resp.headers['Access-Control-Allow-Origin'] = '*'
+        resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
+        resp.headers['Access-Control-Allow-Headers'] = 'Content-Type, X-Sync-Token'
+        return resp
+
+    token = request.args.get('token', '') or request.headers.get('X-Sync-Token', '')
+    # Allow request without token or with matching token
     if token and token != 'inno2026':
         return jsonify({'success': False, 'error': 'Unauthorized token'}), 403
 
     res = db.sync_products_from_sheet(force=True)
-    return jsonify({
-        'success': res.get('status') == 'success',
-        'result': res
+    is_success = res.get('status') == 'success'
+    
+    # Retrieve freshly updated summary
+    summary = db.get_catalog_summary()
+
+    resp = jsonify({
+        'success': is_success,
+        'status': res.get('status'),
+        'totalProducts': summary['totalProducts'],
+        'totalCategories': summary['totalCategories'],
+        'message': f"Synced {summary['totalProducts']} products across {summary['totalCategories']} categories from Google Sheets.",
+        'timestamp': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime()),
+        'sheetId': '12CYpadbOJkj4HUCDTTHflMPHH2sWCqJ8-6x8X8pZbUs',
+        'details': res
     })
+    resp.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    return resp, (200 if is_success else 500)
 
 
 # --- SEO: SITEMAP & ROBOTS.TXT ---

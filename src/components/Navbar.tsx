@@ -10,7 +10,8 @@ import {
   X, 
   FileText,
   HelpCircle,
-  ExternalLink
+  ExternalLink,
+  RefreshCw
 } from 'lucide-react';
 import { CategorySummary } from '../types';
 import { Logo } from './Logo';
@@ -29,6 +30,8 @@ interface NavbarProps {
   onHomeClick: () => void;
   currentView: 'home' | 'catalog';
   onNavigateToCatalog: () => void;
+  onSyncCatalog?: () => void;
+  isSyncing?: boolean;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -44,6 +47,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onHomeClick,
   currentView,
   onNavigateToCatalog,
+  onSyncCatalog,
+  isSyncing = false,
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
@@ -53,15 +58,27 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Top utility bar */}
       <div className="bg-slate-900 text-slate-200 text-xs px-4 py-2">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
             <span className="inline-flex items-center text-emerald-400 font-medium">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mr-1.5"></span>
               Live Verified Inventory
             </span>
             <span className="hidden sm:inline text-slate-400">|</span>
-            <span className="hidden sm:inline text-slate-300">
+            <span className="hidden md:inline text-slate-300">
               India&apos;s Trusted Components &amp; Connectors Supplier
             </span>
+            {onSyncCatalog && (
+              <button
+                type="button"
+                onClick={onSyncCatalog}
+                disabled={isSyncing}
+                className="inline-flex items-center text-slate-300 hover:text-cyan-400 hover:border-cyan-500/50 transition-colors text-[11px] bg-slate-800/90 px-2 py-0.5 rounded border border-slate-700 disabled:opacity-50 cursor-pointer"
+                title="Synchronize latest products and prices from Google Sheet"
+              >
+                <RefreshCw className={`w-3 h-3 mr-1 ${isSyncing ? 'animate-spin text-cyan-400' : 'text-slate-400'}`} />
+                <span>{isSyncing ? 'Syncing...' : 'Sync Sheet'}</span>
+              </button>
+            )}
           </div>
           <div className="flex items-center space-x-4">
             <a
